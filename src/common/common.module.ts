@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ErrorService } from './error/error.service';
 import { AuthGuard } from './auth/auth.guard';
 import { RoleGuard } from './role/role.guard';
+import { ValidationService } from './validation/validation.service';
 
 @Global()
 @Module({
@@ -23,6 +24,7 @@ import { RoleGuard } from './role/role.guard';
   ],
   providers: [
     PrismaService,
+    ErrorService,
     LoggerService,
     {
       provide: 'APP_GUARD',
@@ -36,7 +38,8 @@ import { RoleGuard } from './role/role.guard';
       provide: 'APP_FILTER',
       useClass: ErrorFilter,
     },
+    ValidationService,
   ],
-  exports: [PrismaService, ErrorService],
+  exports: [PrismaService, ErrorService, ValidationService],
 })
 export class CommonModule {}

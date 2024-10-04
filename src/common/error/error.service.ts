@@ -13,6 +13,8 @@ export class ErrorService {
   }
 
   notFound(message: string): void {
+    console.log('tes');
+
     throw new NotFoundException(message);
   }
 

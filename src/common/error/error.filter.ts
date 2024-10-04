@@ -12,8 +12,9 @@ export class ErrorFilter implements ExceptionFilter {
   constructor(private filesService: FilesService) {}
 
   catch(exception: any, host: ArgumentsHost) {
-    const response = host.switchToHttp().getResponse();
-    const request = host.switchToHttp().getRequest();
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse();
+    const request = ctx.getRequest();
 
     //single file
     if (request.file) {
@@ -34,6 +35,8 @@ export class ErrorFilter implements ExceptionFilter {
       exception instanceof HttpException
         ? exception.getResponse()['message']
         : 'Internal Server Error';
+
+    console.log(exception);
 
     response.status(statusCode).json({
       status: 'error',

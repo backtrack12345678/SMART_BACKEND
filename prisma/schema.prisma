@@ -17,27 +17,30 @@ model User {
   userData     User_Data?
   anggotaRapat Anggota_Rapat[]
   refreshToken Refresh_Token?
+  rapat        Rapat[]
 
   @@map("user")
 }
 
 model User_Data {
-  id                Int              @id @default(autoincrement())
-  userId            String           @unique @map("user_id") @db.VarChar(150)
-  user              User             @relation(fields: [userId], references: [id])
-  nama              String           @db.VarChar(150)
-  phone             String           @unique @db.VarChar(20)
-  nip               String           @unique @db.VarChar(150)
-  subUnitKerjaId    Int              @map("sub_unit_kerja_id")
-  subUnitKerja      Sub_Unit_Kerja   @relation(fields: [subUnitKerjaId], references: [id])
-  pangkatGolonganId Int              @map("pangakt_golongan_id")
-  pangkatGolongan   Pangkat_Golongan @relation(fields: [pangkatGolonganId], references: [id])
-  jabatanId         Int              @map("jabatan_id")
-  jabatan           Jabatan          @relation(fields: [jabatanId], references: [id])
-  photo             String           @db.VarChar(250)
-  path              String           @db.Text
-  createdAt         DateTime         @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
-  updatedAt         DateTime?        @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
+  id                Int               @id @default(autoincrement())
+  userId            String            @unique @map("user_id") @db.VarChar(150)
+  user              User              @relation(fields: [userId], references: [id])
+  nama              String            @db.VarChar(150)
+  phone             String            @unique @db.VarChar(20)
+  nip               String            @unique @db.VarChar(150)
+  unitKerjaId       Int?              @map("unit_kerja_id")
+  unitKerja         Unit_Kerja?       @relation(fields: [unitKerjaId], references: [id])
+  subUnitKerjaId    Int?              @map("sub_unit_kerja_id")
+  subUnitKerja      Sub_Unit_Kerja?   @relation(fields: [subUnitKerjaId], references: [id])
+  pangkatGolonganId Int?              @map("pangakt_golongan_id")
+  pangkatGolongan   Pangkat_Golongan? @relation(fields: [pangkatGolonganId], references: [id])
+  jabatanId         Int?              @map("jabatan_id")
+  jabatan           Jabatan?          @relation(fields: [jabatanId], references: [id])
+  photo             String            @db.VarChar(250)
+  path              String            @db.Text
+  createdAt         DateTime          @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
+  updatedAt         DateTime?         @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
 
   @@map("user_data")
 }
@@ -62,6 +65,7 @@ model Unit_Kerja {
   updatedAt    DateTime?        @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
   subUnitKerja Sub_Unit_Kerja[]
   rapat        Rapat[]
+  userData     User_Data[]
 
   @@map("unit_kerja")
 }
@@ -103,40 +107,67 @@ model Jabatan {
 }
 
 model Ruangan_Rapat {
-  id        Int       @id @default(autoincrement())
-  nama      String    @db.VarChar(150)
-  kampus    String    @db.VarChar(150)
-  lokasi    String    @db.Text
-  createdAt DateTime  @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
-  updatedAt DateTime? @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
+  id        Int             @id @default(autoincrement())
+  nama      String          @db.VarChar(150)
+  kampus    String          @db.VarChar(150)
+  alamat    String          @db.Text
+  createdAt DateTime        @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
+  updatedAt DateTime?       @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
+  rapat     Rapat_Offline[]
 
   @@map("ruangan_rapat")
 }
 
 model Rapat {
-  id          String             @id @db.VarChar(150)
-  nama        String             @db.VarChar(150)
-  deskripsi   String             @db.Text
-  status      String             @db.VarChar(10)
-  lokasi      String             @db.Text
-  unitKerjaId Int                @map("unit_kerja_id")
-  unitKerja   Unit_Kerja         @relation(fields: [unitKerjaId], references: [id])
-  surat       String             @db.VarChar(100)
-  mulai       DateTime
-  selesai     DateTime
-  createdAt   DateTime           @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
-  updatedAt   DateTime?          @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
-  buktiSurat  Bukti_Surat_Rapat?
-  laporan     Laporan_Rapat[]
-  anggota     Anggota_Rapat[]
+  id           String             @id @db.VarChar(150)
+  userId       String             @map("user_id") @db.VarChar(150)
+  user         User               @relation(fields: [userId], references: [id])
+  nama         String             @db.VarChar(150)
+  deskripsi    String             @db.Text
+  status       String             @db.VarChar(10)
+  unitKerjaId  Int                @map("unit_kerja_id")
+  unitKerja    Unit_Kerja         @relation(fields: [unitKerjaId], references: [id])
+  surat        String             @db.VarChar(100)
+  mulai        DateTime
+  selesai      DateTime
+  createdAt    DateTime           @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
+  updatedAt    DateTime?          @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
+  buktiSurat   Bukti_Surat_Rapat?
+  laporan      Laporan_Rapat[]
+  anggota      Anggota_Rapat[]
+  rapatOffline Rapat_Offline?
+  rapatOnline  Rapat_Online?
 
   @@map("rapat")
+}
+
+model Rapat_Offline {
+  id        Int           @id @default(autoincrement())
+  rapatId   String        @unique @map("rapat_id") @db.VarChar(150)
+  rapat     Rapat         @relation(fields: [rapatId], references: [id], onDelete: Cascade)
+  ruanganId Int           @map("ruangan_id")
+  ruangan   Ruangan_Rapat @relation(fields: [ruanganId], references: [id])
+  createdAt DateTime      @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
+  updatedAt DateTime?     @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
+
+  @@map("rapat_offline")
+}
+
+model Rapat_Online {
+  id        Int       @id @default(autoincrement())
+  rapatId   String    @unique @map("rapat_id") @db.VarChar(150)
+  rapat     Rapat     @relation(fields: [rapatId], references: [id], onDelete: Cascade)
+  link      String    @db.Text
+  createdAt DateTime  @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
+  updatedAt DateTime? @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
+
+  @@map("rapat_online")
 }
 
 model Bukti_Surat_Rapat {
   id        Int       @id @default(autoincrement())
   rapatId   String    @unique @map("rapat_id") @db.VarChar(150)
-  rapat     Rapat     @relation(fields: [rapatId], references: [id])
+  rapat     Rapat     @relation(fields: [rapatId], references: [id], onDelete: Cascade)
   nama      String    @db.VarChar(250)
   path      String    @db.Text
   createdAt DateTime  @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
@@ -148,7 +179,7 @@ model Bukti_Surat_Rapat {
 model Laporan_Rapat {
   id        Int       @id @default(autoincrement())
   rapatId   String    @map("rapat_id") @db.VarChar(150)
-  rapat     Rapat     @relation(fields: [rapatId], references: [id])
+  rapat     Rapat     @relation(fields: [rapatId], references: [id], onDelete: Cascade)
   notulensi String    @db.Text
   createdAt DateTime  @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
   updatedAt DateTime? @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
@@ -159,7 +190,7 @@ model Laporan_Rapat {
 model Anggota_Rapat {
   id           Int                  @id @default(autoincrement())
   rapatId      String               @map("rapat_id") @db.VarChar(150)
-  rapat        Rapat                @relation(fields: [rapatId], references: [id])
+  rapat        Rapat                @relation(fields: [rapatId], references: [id], onDelete: Cascade)
   userId       String               @map("user_id") @db.VarChar(150)
   user         User                 @relation(fields: [userId], references: [id])
   kehadiran    Boolean              @default(false)
@@ -178,4 +209,6 @@ model Bukti_Absensi_Rapat {
   path           String        @db.Text
   createdAt      DateTime      @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
   updatedAt      DateTime?     @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
+
+  @@map("bukti_absensi_rapat")
 }
