@@ -11,6 +11,7 @@ import {
   Query,
   ParseFilePipeBuilder,
   Put,
+  Res,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -23,6 +24,7 @@ import { FileTypeValidator } from '../common/validations/file/file.validator';
 import { Roles } from '../common/role/role.decorator';
 import { Role } from '../common/role/role.enum';
 import { LoginDto } from './dto/login.dto';
+import { Response } from 'express';
 
 const allowedMimeTypes = {
   photo: ['image/png', 'image/jpg', 'image/jpeg'],
@@ -115,12 +117,24 @@ export class UserController {
   // }
 
   @Post('/login')
-  async login(@Body() payload: LoginDto) {
+  async login(
+    @Body() payload: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     const result = await this.userService.login(payload);
+    response.cookie('refresh_token', result.refreshToken, {
+      path: '/',
+      httpOnly: true,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      sameSite: 'none',
+      secure: process.env.NODE_ENV === 'production',
+    });
     return {
       status: 'success',
       message: 'Login Berhasil',
-      data: result,
+      data: {
+        accessToken: result.accessToken,
+      },
     };
   }
 }
