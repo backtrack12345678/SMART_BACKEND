@@ -66,6 +66,8 @@ export class UserHelper {
       this.errorService.notFound('Sub Unit Kerja Tidak Ditemukan');
     }
 
+    console.log(unitKerjaId, subUnitKerja.unitKerjaId);
+
     if (unitKerjaId !== subUnitKerja.unitKerjaId) {
       this.errorService.badRequest(
         'Sub Unit Kerja Ini Tidak Terdaftar Di Unit Kerja Yang Dipilih',
@@ -180,7 +182,7 @@ export class UserHelper {
           type === 'create' ||
           (type === 'update' && user?.phone !== payload.phone)
         ) {
-          this.checkPhoneMustUnique(payload.phone);
+          await this.checkPhoneMustUnique(payload.phone);
         }
       }
     }
@@ -191,6 +193,7 @@ export class UserHelper {
           type === 'create' ||
           (type === 'update' && user?.nip !== payload.nip)
         ) {
+          await this.checkNIPMustUnique(payload.nip);
         }
       }
     }
@@ -205,7 +208,7 @@ export class UserHelper {
     if (userDataPayload.subUnitKerjaId)
       await this.checkSubUnitKerjaMustExists(
         userDataPayload.subUnitKerjaId,
-        userDataPayload.unitkerjaId,
+        userDataPayload.unitKerjaId,
       );
     if (userDataPayload.pangkatGolonganId)
       await this.checkPangkatMustExists(userDataPayload.pangkatGolonganId);

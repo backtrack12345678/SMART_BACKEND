@@ -81,7 +81,9 @@ export class UserService {
       where: {
         userData: {
           unitKerjaId: user.role === 'operator' ? user.unitKerjaId : undefined,
-          nama: query.name || undefined,
+          nama: {
+            contains: query.name || undefined,
+          },
         },
       },
       take: query.size,
@@ -94,7 +96,7 @@ export class UserService {
     return {
       data: users.map((user) => this.userHelper.toUserResponse(request, user)),
       paging: {
-        size: query.size,
+        size: total < query.size ? total : query.size,
         currentPage: query.page,
         totalPage: Math.ceil(total / query.size),
       },

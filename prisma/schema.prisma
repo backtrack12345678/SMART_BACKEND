@@ -124,7 +124,8 @@ model Rapat {
   user         User               @relation(fields: [userId], references: [id])
   nama         String             @db.VarChar(150)
   deskripsi    String             @db.Text
-  status       String             @db.VarChar(10)
+  tipe         String             @db.VarChar(10)
+  status       String             @default("Belum Dimulai") @db.VarChar(20)
   unitKerjaId  Int                @map("unit_kerja_id")
   unitKerja    Unit_Kerja         @relation(fields: [unitKerjaId], references: [id])
   surat        String             @db.VarChar(100)
