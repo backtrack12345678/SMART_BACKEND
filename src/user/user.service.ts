@@ -12,6 +12,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { GetAllUsersQueryDto } from './dto/get.dto';
 import { FilesService } from '../files/files.service';
 import { UserHelper } from './helper/user.helper';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
@@ -21,6 +22,7 @@ export class UserService {
     private jwtService: JwtService,
     private userHelper: UserHelper,
     private fileService: FilesService,
+    private configService: ConfigService,
   ) {}
 
   async createUser(
@@ -75,13 +77,45 @@ export class UserService {
     return this.userHelper.toUserResponse(request, createUser);
   }
 
+  async findOneUser(request, userId: string) {
+    const auth: IAuth = request.user;
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: this.userHelper.userSelectCondition,
+    });
+
+    if (!user) {
+      this.errorService.notFound('Pengguna Tidak Ditemukan');
+    }
+
+    if (auth.role === 'operator') {
+      if (auth.unitKerjaId !== user.userData.unitKerja.id) {
+        this.errorService.forbidden(
+          'Tidak Dapat Mengakses Pengguna Dari Unit Kerja Lain',
+        );
+      }
+    }
+
+    // if (auth.role === 'user') {
+    //   if (auth.id !== user.id) {
+    //     this.errorService.forbidden('Tidak Dapat Melihat Pengguna Lain');
+    //   }
+    // }
+
+    return this.userHelper.toUserResponse(request, user);
+  }
+
   async getAllUsers(request, query: GetAllUsersQueryDto) {
     const user: IAuth = request.user;
     const users = await this.prismaService.user.findMany({
       where: {
         userData: {
           unitKerjaId: user.role === 'operator' ? user.unitKerjaId : undefined,
-          nama: query.name || undefined,
+          nama: {
+            contains: query.name || undefined,
+          },
         },
       },
       take: query.size,
@@ -94,7 +128,7 @@ export class UserService {
     return {
       data: users.map((user) => this.userHelper.toUserResponse(request, user)),
       paging: {
-        size: query.size,
+        size: total < query.size ? total : query.size,
         currentPage: query.page,
         totalPage: Math.ceil(total / query.size),
       },
@@ -235,6 +269,67 @@ export class UserService {
       accessToken,
       refreshToken,
     };
+  }
+
+  async updateAccessToken(refreshToken?: string) {
+    if (!refreshToken) {
+      this.errorService.unauthorized(
+        'Kredensial Tidak Valid. Silahkan Login Kembali',
+      );
+    }
+
+    try {
+      await this.jwtService.verifyAsync(refreshToken, {
+        secret: this.configService.get<string>('REFRESH_TOKEN_KEY'),
+      });
+    } catch (e) {
+      this.errorService.unauthorized(
+        'Kredensial Tidak Valid. Silahkan Login Kembali',
+      );
+    }
+
+    const token = await this.prismaService.refresh_Token.findFirst({
+      where: {
+        refreshToken: refreshToken,
+      },
+      select: {
+        id: true,
+        user: {
+          select: {
+            id: true,
+            role: true,
+            userData: {
+              select: {
+                unitKerjaId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!token) {
+      this.errorService.unauthorized(
+        'Kredensial Tidak Valid. Silahkan Login Kembali',
+      );
+    }
+
+    return this.generateUserToken(token.user, 'accessToken');
+  }
+
+  async logout(user: IAuth) {
+    const refreshToken = await this.prismaService.refresh_Token.delete({
+      where: {
+        userId: user.id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!refreshToken) {
+      this.errorService.unauthorized('Gagal Logout');
+    }
   }
 
   async generateUserToken(user, type: string): Promise<string> {

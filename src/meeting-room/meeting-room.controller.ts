@@ -11,11 +11,16 @@ import {
 import { MeetingRoomService } from './meeting-room.service';
 import { CreateMeetingRoomDto } from './dto/create-meeting-room.dto';
 import { UpdateMeetingRoomDto } from './dto/update-meeting-room.dto';
+import { Auth } from '../common/auth/auth.decorator';
+import { Roles } from '../common/role/role.decorator';
+import { Role } from '../common/role/role.enum';
 
 @Controller('/api/meeting-room')
 export class MeetingRoomController {
   constructor(private readonly meetingRoomService: MeetingRoomService) {}
 
+  @Auth()
+  @Roles(Role.ADMIN)
   @Post()
   async createRoom(@Body() payload: CreateMeetingRoomDto) {
     const result = await this.meetingRoomService.createRoom(payload);
@@ -26,11 +31,15 @@ export class MeetingRoomController {
     };
   }
 
+  @Auth()
+  @Roles(Role.ADMIN)
   @Get()
   findAll() {
     return this.meetingRoomService.findAll();
   }
 
+  @Auth()
+  @Roles(Role.ADMIN)
   @Get('/:roomId')
   async findOneRoom(@Param('roomId', ParseIntPipe) roomId: number) {
     const result = await this.meetingRoomService.findOneRoom(roomId);
@@ -40,6 +49,8 @@ export class MeetingRoomController {
     };
   }
 
+  @Auth()
+  @Roles(Role.ADMIN)
   @Put('/:roomId')
   async updateRoom(
     @Param('roomId', ParseIntPipe) roomId: number,
@@ -53,6 +64,8 @@ export class MeetingRoomController {
     };
   }
 
+  @Auth()
+  @Roles(Role.ADMIN)
   @Delete('/:roomId')
   async removeRoom(@Param('roomId', ParseIntPipe) roomId: number) {
     await this.meetingRoomService.removeRoom(roomId);

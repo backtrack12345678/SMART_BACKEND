@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { CreateMeetDto } from './dto/create-meet.dto';
+import { AddParticipantsDto, CreateMeetDto } from './dto/create-meet.dto';
 import { UpdateMeetDto } from './dto/update-meet.dto';
-// import { MeetHelper } from './helper/meet.helper';
+import { MeetHelper } from './helper/meet.helper';
 import { ErrorService } from '../common/error/error.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { v4 as uuid } from 'uuid';
@@ -9,11 +9,16 @@ import { ValidationService } from '../common/validation/validation.service';
 import { IAuth } from '../common/model/web.model';
 import { getHost } from '../common/utlis/utils';
 import { FilesService } from '../files/files.service';
+import {
+  GetMeetingByUserQueryDto,
+  GetParticipantsQueryDto,
+} from './dto/query.dto';
+import { UpdateMeetingStatusDto } from './dto/param.dto';
 
 @Injectable()
 export class MeetService {
   constructor(
-    // private MeetHelper: MeetHelper,
+    private meetHelper: MeetHelper,
     private errorService: ErrorService,
     private prismaService: PrismaService,
     private validationService: ValidationService,
@@ -42,12 +47,12 @@ export class MeetService {
       }
     }
 
-    if (dataRapat.status === 'offline') {
+    if (dataRapat.tipe === 'offline') {
       //cek ruangan kosong
-      await this.checkRuanganMustsExist(ruanganId);
+      await this.meetHelper.checkRuanganMustsExist(ruanganId);
 
       // cek ruangan sedang di gunakan atau tidak
-      await this.checkConflictMeeting(
+      await this.meetHelper.checkConflictMeeting(
         ruanganId,
         dataRapat.mulai,
         dataRapat.selesai,
@@ -59,7 +64,7 @@ export class MeetService {
         id: `rapat-${uuid().toString()}`,
         userId: 'user-48a24b97-b1c2-40f8-8289-d14486b70543',
         ...dataRapat,
-        ...(dataRapat.status === 'offline'
+        ...(dataRapat.tipe === 'offline'
           ? {
               rapatOffline: {
                 create: {
@@ -87,11 +92,54 @@ export class MeetService {
     return this.toMeetingResponse(request, meeting);
   }
 
-  findAll() {
-    return `This action returns all meet`;
+  async findAllMeetingByUser(request, query: GetMeetingByUserQueryDto) {
+    if (query.date && query.month) {
+      this.errorService.badRequest('Pilih Satu Antara date atau month');
+    }
+
+    const meetings = await this.prismaService.rapat.findMany({
+      where: {
+        nama: {
+          contains: query.name || undefined,
+        },
+        ...(query.date && {
+          mulai: {
+            gte: new Date(query.date), // Rapat yang akan datang
+          },
+          status: 'Belum Dimulai',
+        }),
+        ...(query.month && {
+          mulai: {
+            gte: new Date(query.month + '-01'), // Awal bulan
+            lt: new Date(
+              new Date(query.month + '-01').setMonth(
+                new Date(query.month + '-01').getMonth() + 1,
+              ),
+            ), // Awal bulan berikutnya
+          },
+          status: 'Selesai',
+        }),
+        anggota: {
+          some: {
+            userId: request.user.id,
+          },
+        },
+      },
+      take: query.size,
+      ...(query.cursor && {
+        skip: 1,
+        cursor: {
+          id: query.cursor,
+        },
+      }),
+      select: this.meetingSelectCondition,
+    });
+
+    return meetings.map((meeting) => this.toMeetingResponse(request, meeting));
   }
 
   async findOneMeeting(request, meetingId: string, type?: string) {
+    const user: IAuth = request.user;
     const meeting = await this.prismaService.rapat.findUnique({
       where: {
         id: meetingId,
@@ -101,6 +149,18 @@ export class MeetService {
 
     if (!meeting) {
       this.errorService.notFound('Rapat Tidak Ditemukan');
+    }
+
+    if (user.role === 'pengurus') {
+      if (user.unitKerjaId !== meeting.unitKerja.id) {
+        this.errorService.forbidden(
+          'Tidak Dapat Mengakses Rapat Dari Unit Kerja Lain',
+        );
+      }
+    }
+
+    if (user.role === 'user') {
+      this.meetHelper.checkMeetingParticipant(meetingId, user.id);
     }
 
     return this.toMeetingResponse(request, meeting, type);
@@ -202,12 +262,12 @@ export class MeetService {
       }
     }
 
-    if (dataRapat.status === 'offline') {
+    if (dataRapat.tipe === 'offline') {
       //cek ruangan kosong
-      await this.checkRuanganMustsExist(ruanganId);
+      await this.meetHelper.checkRuanganMustsExist(ruanganId);
 
       // cek ruangan sedang di gunakan atau tidak
-      await this.checkConflictMeeting(
+      await this.meetHelper.checkConflictMeeting(
         ruanganId,
         dataRapat.mulai,
         dataRapat.selesai,
@@ -221,7 +281,7 @@ export class MeetService {
       },
       data: {
         ...dataRapat,
-        ...(dataRapat.status === 'offline'
+        ...(dataRapat.tipe === 'offline'
           ? {
               rapatOffline: {
                 update: {
@@ -262,7 +322,7 @@ export class MeetService {
     if (user.role === 'operator') {
       if (user.unitKerjaId !== meeting.unitKerja.id) {
         this.errorService.forbidden(
-          'Tidak Dapat Memperbarui Rapat Dari Unit Kerja Lain',
+          'Tidak Dapat Menghapus Rapat Dari Unit Kerja Lain',
         );
       }
     }
@@ -283,46 +343,181 @@ export class MeetService {
     this.fileService.deleteFile(deleteMeeting.buktiSurat);
   }
 
-  async checkConflictMeeting(
-    ruanganId: number,
-    mulai: Date,
-    selesai: Date,
-    meetingId?: string,
+  async addMeetingParticipants(
+    request,
+    meetingId: string,
+    payload: AddParticipantsDto,
   ) {
-    const conflict = await this.prismaService.rapat_Offline.findFirst({
+    const meeting = await this.findOneMeeting(request, meetingId);
+
+    this.meetHelper.checkDuplicateParticipantIdsPayload(payload.anggota);
+    const participants = await this.meetHelper.checkParticipantsExist(
+      request,
+      payload.anggota,
+    );
+    await this.meetHelper.checkParticipantsAlreadyExistOnMeeting(
+      meeting.id,
+      payload.anggota,
+    );
+
+    await this.prismaService.anggota_Rapat.createMany({
+      data: payload.anggota.map((userId) => ({
+        rapatId: meeting.id,
+        userId: userId,
+      })),
+    });
+
+    return participants;
+  }
+
+  async findMeetingParticipants(
+    request,
+    meetingId,
+    query?: GetParticipantsQueryDto,
+  ) {
+    if (query.page && query.cursor) {
+      this.errorService.badRequest('Pilih Antara Page Atau Cursor');
+    }
+    await this.findOneMeeting(request, meetingId);
+    const skipConditions = query.page
+      ? (query.page - 1) * query.size
+      : query.cursor
+        ? 1
+        : null;
+
+    const participants = await this.prismaService.anggota_Rapat.findMany({
       where: {
-        rapatId: { not: meetingId || undefined },
-        ruanganId: ruanganId,
-        rapat: {
-          AND: [
-            {
-              mulai: { lte: selesai },
+        rapatId: meetingId,
+        user: {
+          userData: {
+            nama: {
+              contains: query.name || undefined,
             },
-            {
-              selesai: { gte: mulai },
+          },
+        },
+      },
+      take: query.size,
+      skip: skipConditions || undefined,
+      ...(query.cursor && {
+        cursor: {
+          id: query.cursor,
+        },
+      }),
+      select: {
+        user: {
+          select: this.meetHelper.participantsSelectCondition,
+        },
+        ...(request.user.role !== 'user' && {
+          buktiAbsensi: {
+            select: {
+              nama: true,
             },
-          ],
+          },
+          tandaTangan: {
+            select: {
+              nama: true,
+            },
+          },
+        }),
+      },
+    });
+
+    return {
+      data: participants.map((participant) =>
+        this.meetHelper.toParticipantsResponse(request, participant),
+      ),
+      ...(query.page && {
+        paging: {
+          size: query.size,
+          currentPage: query.page,
+          totalPage: Math.ceil(participants.length / query.size),
+        },
+      }),
+    };
+  }
+
+  async updateMeetingStatus(request, param: UpdateMeetingStatusDto) {
+    const meeting = await this.findOneMeeting(request, param.meetingId);
+
+    const currentTime = new Date();
+    if (currentTime <= new Date(meeting.selesai)) {
+      this.errorService.badRequest('Rapat Belum Selesai');
+    }
+
+    await this.prismaService.rapat.update({
+      where: {
+        id: meeting.id,
+      },
+      data: {
+        status: param.status,
+      },
+    });
+  }
+
+  async meetingAttendance(
+    request,
+    meetingId: string,
+    files: {
+      buktiAbsensi: Express.Multer.File[];
+      tandaTangan: Express.Multer.File[];
+    },
+  ) {
+    const meeting = await this.findOneMeeting(request, meetingId);
+    const currentTime = new Date();
+    if (currentTime < new Date(meeting.mulai)) {
+      this.errorService.badRequest('Tidak Bisa Absen, Rapat Belum Dimulai');
+    }
+
+    if (meeting.status === 'Selesai') {
+      this.errorService.badRequest('Tidak Bisa Absen, Rapat Telah Selesai');
+    }
+
+    const oldAttendanceFiles = await this.meetHelper.getOldAttendanceFiles(
+      meeting.id,
+      request.user.id,
+    );
+    const participantsId = await this.meetHelper.getMeetingParticipantsId(
+      meeting.id,
+      request.user.id,
+    );
+
+    const buktiAbsensi = {
+      nama: files.buktiAbsensi[0].filename,
+      path: files.buktiAbsensi[0].path,
+    };
+
+    const tandaTangan = {
+      nama: files.tandaTangan[0].filename,
+      path: files.tandaTangan[0].path,
+    };
+
+    await this.prismaService.anggota_Rapat.update({
+      where: {
+        id: participantsId,
+      },
+      data: {
+        kehadiran: true,
+        buktiAbsensi: {
+          upsert: {
+            create: buktiAbsensi,
+            update: buktiAbsensi,
+          },
+        },
+        tandaTangan: {
+          upsert: {
+            create: tandaTangan,
+            update: tandaTangan,
+          },
         },
       },
     });
 
-    if (conflict) {
-      this.errorService.badRequest('Ruangan Ini Sedang Digunakan');
+    if (oldAttendanceFiles.buktiAbsensi) {
+      this.fileService.deleteFile(oldAttendanceFiles.buktiAbsensi);
     }
-  }
 
-  async checkRuanganMustsExist(ruanganId: number) {
-    const ruangan = await this.prismaService.ruangan_Rapat.findUnique({
-      where: {
-        id: ruanganId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!ruangan) {
-      this.errorService.notFound('Ruangan Tidak Ditemukan');
+    if (oldAttendanceFiles.tandaTangan) {
+      this.fileService.deleteFile(oldAttendanceFiles.tandaTangan);
     }
   }
 }

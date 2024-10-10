@@ -8,5 +8,6 @@ import { FilesModule } from '../files/files.module';
   imports: [FilesModule],
   controllers: [MeetController],
   providers: [MeetService, MeetHelper],
+  exports: [MeetService],
 })
 export class MeetModule {}

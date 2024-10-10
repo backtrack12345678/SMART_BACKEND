@@ -1,5 +1,7 @@
 import { Transform } from 'class-transformer';
 import {
+  ArrayNotEmpty,
+  IsArray,
   IsDate,
   IsIn,
   IsNotEmpty,
@@ -24,16 +26,16 @@ export class CreateMeetDto {
   @IsNotEmpty()
   @IsString()
   @IsIn(['offline', 'online'])
-  status: string;
+  tipe: string;
 
-  @ValidateIf((o) => o.status === 'offline')
+  @ValidateIf((o) => o.tipe === 'offline')
   @IsNotEmpty()
   @IsNumber()
   @IsPositive()
   @Transform(({ value }) => parseInt(value, 10))
   ruanganId: number;
 
-  @ValidateIf((o) => o.status === 'online')
+  @ValidateIf((o) => o.tipe === 'online')
   @IsString()
   @IsNotEmpty()
   link: string;
@@ -60,4 +62,11 @@ export class CreateMeetDto {
   @IsDate()
   @MinDate(new Date())
   selesai: Date;
+}
+
+export class AddParticipantsDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  anggota: string[];
 }

@@ -12,6 +12,7 @@ import {
   ParseFilePipeBuilder,
   Put,
   Res,
+  Delete,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -24,7 +25,9 @@ import { FileTypeValidator } from '../common/validations/file/file.validator';
 import { Roles } from '../common/role/role.decorator';
 import { Role } from '../common/role/role.enum';
 import { LoginDto } from './dto/login.dto';
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import { GetMeetingByUserQueryDto } from '../meet/dto/query.dto';
+import { MeetService } from '../meet/meet.service';
 
 const allowedMimeTypes = {
   photo: ['image/png', 'image/jpg', 'image/jpeg'],
@@ -32,7 +35,10 @@ const allowedMimeTypes = {
 
 @Controller('/api/user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly meetService: MeetService,
+  ) {}
 
   @Auth()
   @Roles(Role.ADMIN, Role.OPERATOR)
@@ -79,10 +85,39 @@ export class UserController {
     };
   }
 
-  // @Get('/:id')
-  // getUser(@Param('id') id: string) {
-  //   return this.userService.findOne(+id);
-  // }
+  @Auth()
+  @Get('/profile')
+  async getProfile(@Req() request) {
+    const result = await this.userService.findOneUser(request, request.user.id);
+    return {
+      status: 'success',
+      data: result,
+    };
+  }
+
+  @Auth()
+  @Get('/meeting')
+  async findAllMeetingByUser(
+    @Req() request,
+    @Query() query: GetMeetingByUserQueryDto,
+  ) {
+    const result = await this.meetService.findAllMeetingByUser(request, query);
+    return {
+      status: 'success',
+      data: result,
+    };
+  }
+
+  @Auth()
+  @Roles(Role.ADMIN, Role.OPERATOR)
+  @Get('/:userId')
+  async findOneUser(@Req() request, @Param('userId') userId: string) {
+    const result = await this.userService.findOneUser(request, userId);
+    return {
+      status: 'success',
+      data: result,
+    };
+  }
 
   @Auth()
   @Roles(Role.ADMIN, Role.OPERATOR)
@@ -135,6 +170,38 @@ export class UserController {
       data: {
         accessToken: result.accessToken,
       },
+    };
+  }
+
+  @Post('/refresh-token')
+  async updateAccessToken(@Req() request: Request) {
+    const result = await this.userService.updateAccessToken(
+      request.cookies?.refresh_token,
+    );
+    return {
+      status: 'success',
+      message: 'Access Token Berhasil Dibuat',
+      data: {
+        accessToken: result,
+      },
+    };
+  }
+
+  @Auth()
+  @Delete('/logout')
+  async logout(@Req() request, @Res({ passthrough: true }) response: Response) {
+    await this.userService.logout(request.user);
+    response.cookie('refresh_token', '', {
+      path: '/',
+      httpOnly: true,
+      maxAge: 0,
+      sameSite: 'none',
+      secure: process.env.NODE_ENV === 'production',
+    });
+    return {
+      status: 'success',
+      message: 'Logout Berhasil',
+      data: true,
     };
   }
 }
