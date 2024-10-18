@@ -50,6 +50,7 @@ export class GetParticipantsQueryDto {
   @IsPositive()
   @Transform(({ value }) => parseInt(value, 10))
   size?: number = 12;
+
   @IsOptional()
   @IsNumber()
   @IsPositive()
