@@ -7,6 +7,7 @@ import {
   Delete,
   ParseIntPipe,
   Put,
+  Query,
 } from '@nestjs/common';
 import { GolonganService } from './golongan.service';
 import { CreateGolonganDto } from './dto/create-golongan.dto';
@@ -14,10 +15,11 @@ import { UpdateGolonganDto } from './dto/update-golongan.dto';
 import { Auth } from '../common/auth/auth.decorator';
 import { Roles } from '../common/role/role.decorator';
 import { Role } from '../common/role/role.enum';
+import { GetGolonganQueryDto } from './dto/query.dto';
 
 @Controller('/api/golongan')
 export class GolonganController {
-  constructor(private readonly golonganService: GolonganService) {}
+  constructor(private readonly golonganService: GolonganService) { }
 
   @Auth()
   @Roles(Role.ADMIN)
@@ -32,10 +34,17 @@ export class GolonganController {
   }
 
   @Auth()
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @Get()
-  findAll() {
-    return this.golonganService.findAll();
+  async findAllGroups(
+    @Query() query: GetGolonganQueryDto
+  ) {
+    const result = await this.golonganService.findAllGroups(query);
+    return {
+      status: 'success',
+      paging: result.paging,
+      data: result.data,
+    };
   }
 
   @Auth()

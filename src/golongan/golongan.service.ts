@@ -4,13 +4,14 @@ import { UpdateGolonganDto } from './dto/update-golongan.dto';
 import { ErrorService } from '../common/error/error.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { GetGolonganQueryDto } from './dto/query.dto';
 
 @Injectable()
 export class GolonganService {
   constructor(
     private prismaService: PrismaService,
     private errorService: ErrorService,
-  ) {}
+  ) { }
 
   async createGroup(payload: CreateGolonganDto) {
     await this.checkKodeMustUnique(payload.kode);
@@ -24,8 +25,26 @@ export class GolonganService {
     return group;
   }
 
-  findAll() {
-    return `This action returns all golongan`;
+  async findAllGroups(query: GetGolonganQueryDto) {
+    const groups = await this.prismaService.pangkat_Golongan.findMany({
+      where: {
+        nama: {
+          contains: query.name || undefined,
+        },
+      },
+      skip: (query.page - 1) * query.size,
+      take: query.size,
+      select: this.groupSelectCondition,
+    });
+
+    return {
+      data: groups.map((position) => position),
+      paging: {
+        size: query.size,
+        currentPage: query.page,
+        totalPage: Math.ceil(groups.length / query.size),
+      },
+    };
   }
 
   async findOneGroup(golonganId: number) {

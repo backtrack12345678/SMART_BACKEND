@@ -4,13 +4,14 @@ import { UpdateMeetingRoomDto } from './dto/update-meeting-room.dto';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { ErrorService } from '../common/error/error.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { GetMeetingRoomQueryDto } from './dto/query.dto';
 
 @Injectable()
 export class MeetingRoomService {
   constructor(
     private prismaService: PrismaService,
     private errorService: ErrorService,
-  ) {}
+  ) { }
 
   async createRoom(payload: CreateMeetingRoomDto) {
     const room = await this.prismaService.ruangan_Rapat.create({
@@ -23,8 +24,26 @@ export class MeetingRoomService {
     return room;
   }
 
-  findAll() {
-    return `This action returns all meetingRoom`;
+  async findAllMeetingRooms(query: GetMeetingRoomQueryDto) {
+    const meetingRooms = await this.prismaService.ruangan_Rapat.findMany({
+      where: {
+        nama: {
+          contains: query.name || undefined,
+        },
+      },
+      skip: (query.page - 1) * query.size,
+      take: query.size,
+      select: this.meetingRoomSelectCondtion,
+    });
+
+    return {
+      data: meetingRooms.map((position) => position),
+      paging: {
+        size: query.size,
+        currentPage: query.page,
+        totalPage: Math.ceil(meetingRooms.length / query.size),
+      },
+    };
   }
 
   async findOneRoom(roomId: number) {

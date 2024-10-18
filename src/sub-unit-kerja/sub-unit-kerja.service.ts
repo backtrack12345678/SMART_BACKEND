@@ -5,6 +5,7 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { ErrorService } from '../common/error/error.service';
 import { UnitKerjaService } from '../unit-kerja/unit-kerja.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { GetSubUnitKerjaQueryDto } from './dto/query.dto';
 
 @Injectable()
 export class SubUnitKerjaService {
@@ -12,7 +13,7 @@ export class SubUnitKerjaService {
     private prismaService: PrismaService,
     private errorService: ErrorService,
     private unitKerjaService: UnitKerjaService,
-  ) {}
+  ) { }
   async createSubUnitKerja(payload: CreateSubUnitKerjaDto) {
     await this.unitKerjaService.findOneUnitKerja(payload.unitKerjaId);
     await this.checkKodeMustUnique(payload.kode);
@@ -25,8 +26,26 @@ export class SubUnitKerjaService {
     return subUnitKerja;
   }
 
-  findAll() {
-    return `This action returns all subUnitKerja`;
+  async findAllSubUnitKerja(query: GetSubUnitKerjaQueryDto) {
+    const subUnitKerja = await this.prismaService.sub_Unit_Kerja.findMany({
+      where: {
+        nama: {
+          contains: query.name || undefined,
+        },
+      },
+      skip: (query.page - 1) * query.size,
+      take: query.size,
+      select: this.subUnitKerjaSelectCondition,
+    });
+
+    return {
+      data: subUnitKerja.map((suk) => suk),
+      paging: {
+        size: query.size,
+        currentPage: query.page,
+        totalPage: Math.ceil(subUnitKerja.length / query.size),
+      },
+    };
   }
 
   async findOneSubUnitKerja(subUnitKerjaId: number) {

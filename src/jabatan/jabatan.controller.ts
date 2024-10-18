@@ -7,6 +7,7 @@ import {
   Delete,
   ParseIntPipe,
   Put,
+  Query,
 } from '@nestjs/common';
 import { JabatanService } from './jabatan.service';
 import { CreateJabatanDto } from './dto/create-jabatan.dto';
@@ -14,10 +15,11 @@ import { UpdateJabatanDto } from './dto/update-jabatan.dto';
 import { Auth } from '../common/auth/auth.decorator';
 import { Roles } from '../common/role/role.decorator';
 import { Role } from '../common/role/role.enum';
+import { GetJabatanQueryDto } from './dto/query.dto';
 
 @Controller('/api/jabatan')
 export class JabatanController {
-  constructor(private readonly jabatanService: JabatanService) {}
+  constructor(private readonly jabatanService: JabatanService) { }
 
   @Auth()
   @Roles(Role.ADMIN)
@@ -32,10 +34,17 @@ export class JabatanController {
   }
 
   @Auth()
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @Get()
-  findAll() {
-    return this.jabatanService.findAll();
+  async findAllPositions(
+    @Query() query: GetJabatanQueryDto
+  ) {
+    const result = await this.jabatanService.findAllPositions(query);
+    return {
+      status: 'success',
+      paging: result.paging,
+      data: result.data,
+    };
   }
 
   @Auth()

@@ -7,6 +7,7 @@ import {
   Delete,
   ParseIntPipe,
   Put,
+  Query,
 } from '@nestjs/common';
 import { UnitKerjaService } from './unit-kerja.service';
 import { CreateUnitKerjaDto } from './dto/create-unit-kerja.dto';
@@ -14,10 +15,11 @@ import { UpdateUnitKerjaDto } from './dto/update-unit-kerja.dto';
 import { Auth } from '../common/auth/auth.decorator';
 import { Roles } from '../common/role/role.decorator';
 import { Role } from '../common/role/role.enum';
+import { GetUnitKerjaQueryDto } from './dto/query.dto';
 
 @Controller('/api/unit-kerja')
 export class UnitKerjaController {
-  constructor(private readonly unitKerjaService: UnitKerjaService) {}
+  constructor(private readonly unitKerjaService: UnitKerjaService) { }
 
   @Auth()
   @Roles(Role.ADMIN)
@@ -31,10 +33,20 @@ export class UnitKerjaController {
     };
   }
 
+  @Auth()
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @Get()
-  findAll() {
-    return this.unitKerjaService.findAll();
+  async findAllUnitKerja(
+    @Query() query: GetUnitKerjaQueryDto,
+  ) {
+    const result = await this.unitKerjaService.findAllUnitKerja(query);
+    return {
+      status: 'success',
+      paging: result.paging,
+      data: result.data,
+    };
   }
+
   @Auth()
   @Roles(Role.ADMIN)
   @Get('/:unitKerjaId')

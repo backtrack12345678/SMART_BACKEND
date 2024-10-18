@@ -4,13 +4,14 @@ import { UpdateUnitKerjaDto } from './dto/update-unit-kerja.dto';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { ErrorService } from '../common/error/error.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { GetUnitKerjaQueryDto } from './dto/query.dto';
 
 @Injectable()
 export class UnitKerjaService {
   constructor(
     private prismaService: PrismaService,
     private errorService: ErrorService,
-  ) {}
+  ) { }
 
   async createUnitKerja(payload: CreateUnitKerjaDto) {
     await this.checkKodeMustUnique(payload.kode);
@@ -25,8 +26,26 @@ export class UnitKerjaService {
     return unitKerja;
   }
 
-  findAll() {
-    return `This action returns all unitKerja`;
+  async findAllUnitKerja(query: GetUnitKerjaQueryDto) {
+    const unitKerja = await this.prismaService.unit_Kerja.findMany({
+      where: {
+        nama: {
+          contains: query.name || undefined,
+        },
+      },
+      skip: (query.page - 1) * query.size,
+      take: query.size,
+      select: this.unitKerjaSelectCondition,
+    });
+
+    return {
+      data: unitKerja.map((uk) => uk),
+      paging: {
+        size: query.size,
+        currentPage: query.page,
+        totalPage: Math.ceil(unitKerja.length / query.size),
+      },
+    };
   }
 
   async findOneUnitKerja(unitKerjaId: number) {

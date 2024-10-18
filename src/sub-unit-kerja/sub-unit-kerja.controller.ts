@@ -7,6 +7,7 @@ import {
   Delete,
   ParseIntPipe,
   Put,
+  Query,
 } from '@nestjs/common';
 import { SubUnitKerjaService } from './sub-unit-kerja.service';
 import { CreateSubUnitKerjaDto } from './dto/create-sub-unit-kerja.dto';
@@ -14,10 +15,11 @@ import { UpdateSubUnitKerjaDto } from './dto/update-sub-unit-kerja.dto';
 import { Role } from '../common/role/role.enum';
 import { Auth } from '../common/auth/auth.decorator';
 import { Roles } from '../common/role/role.decorator';
+import { GetSubUnitKerjaQueryDto } from './dto/query.dto';
 
 @Controller('/api/sub-unit-kerja')
 export class SubUnitKerjaController {
-  constructor(private readonly subUnitKerjaService: SubUnitKerjaService) {}
+  constructor(private readonly subUnitKerjaService: SubUnitKerjaService) { }
 
   @Auth()
   @Roles(Role.ADMIN)
@@ -31,9 +33,18 @@ export class SubUnitKerjaController {
     };
   }
 
+  @Auth()
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @Get()
-  findAll() {
-    return this.subUnitKerjaService.findAll();
+  async findAllSubUnitKerja(
+    @Query() query: GetSubUnitKerjaQueryDto
+  ) {
+    const result = await this.subUnitKerjaService.findAllSubUnitKerja(query);
+    return {
+      status: 'success',
+      paging: result.paging,
+      data: result.data,
+    };
   }
 
   @Auth()

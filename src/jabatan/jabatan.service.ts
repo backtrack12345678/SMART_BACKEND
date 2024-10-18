@@ -4,13 +4,14 @@ import { UpdateJabatanDto } from './dto/update-jabatan.dto';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { ErrorService } from '../common/error/error.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { GetJabatanQueryDto } from './dto/query.dto';
 
 @Injectable()
 export class JabatanService {
   constructor(
     private prismaService: PrismaService,
     private errorService: ErrorService,
-  ) {}
+  ) { }
 
   async createPosition(payload: CreateJabatanDto) {
     await this.checkKodeMustUnique(payload.kode);
@@ -25,8 +26,26 @@ export class JabatanService {
     return position;
   }
 
-  findAll() {
-    return `This action returns all jabatan`;
+  async findAllPositions(query: GetJabatanQueryDto) {
+    const positions = await this.prismaService.jabatan.findMany({
+      where: {
+        nama: {
+          contains: query.name || undefined,
+        },
+      },
+      skip: (query.page - 1) * query.size,
+      take: query.size,
+      select: this.positionSelectCondition,
+    });
+
+    return {
+      data: positions.map((position) => position),
+      paging: {
+        size: query.size,
+        currentPage: query.page,
+        totalPage: Math.ceil(positions.length / query.size),
+      },
+    };
   }
 
   async findOnePosition(jabatanId: number) {
