@@ -11,7 +11,7 @@ export class MeetingRoomService {
   constructor(
     private prismaService: PrismaService,
     private errorService: ErrorService,
-  ) { }
+  ) {}
 
   async createRoom(payload: CreateMeetingRoomDto) {
     const room = await this.prismaService.ruangan_Rapat.create({
@@ -106,6 +106,7 @@ export class MeetingRoomService {
     id: true,
     nama: true,
     kampus: true,
+    alamat: true,
     createdAt: true,
   };
 }
