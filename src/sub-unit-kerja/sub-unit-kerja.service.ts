@@ -13,7 +13,7 @@ export class SubUnitKerjaService {
     private prismaService: PrismaService,
     private errorService: ErrorService,
     private unitKerjaService: UnitKerjaService,
-  ) { }
+  ) {}
   async createSubUnitKerja(payload: CreateSubUnitKerjaDto) {
     await this.unitKerjaService.findOneUnitKerja(payload.unitKerjaId);
     await this.checkKodeMustUnique(payload.kode);
@@ -33,17 +33,28 @@ export class SubUnitKerjaService {
           contains: query.name || undefined,
         },
       },
-      skip: (query.page - 1) * query.size,
-      take: query.size,
+      ...(query.size && {
+        skip: (query.page - 1) * query.size,
+        take: query.size || undefined,
+      }),
       select: this.subUnitKerjaSelectCondition,
+    });
+
+    const total = await this.prismaService.sub_Unit_Kerja.count({
+      where: {
+        nama: {
+          contains: query.name || undefined,
+        },
+      },
     });
 
     return {
       data: subUnitKerja.map((suk) => suk),
       paging: {
-        size: query.size,
+        size: query.size || total,
         currentPage: query.page,
-        totalPage: Math.ceil(subUnitKerja.length / query.size),
+        totalPage: query.size ? Math.ceil(total / query.size) : 1,
+        totalItem: total,
       },
     };
   }

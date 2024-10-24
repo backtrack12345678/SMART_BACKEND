@@ -13,6 +13,7 @@ import {
   Put,
   Res,
   Delete,
+  Patch,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -146,11 +147,20 @@ export class UserController {
     };
   }
 
+  @Auth()
+  @Patch('/change-password')
+  async changePassword(@Req() request, @Body() payload) {
+    await this.userService.changePassword(request, payload);
+    return {
+      status: 'success',
+      message: 'Kata Sandi Berhasil Diubah',
+    };
+  }
+
   // @Delete(':id')
   // deleteUser(@Param('id') id: string) {
   //   return this.userService.deleteUser(+id);
   // }
-
   @Post('/login')
   async login(
     @Body() payload: LoginDto,

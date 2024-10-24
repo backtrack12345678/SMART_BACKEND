@@ -11,7 +11,7 @@ export class UnitKerjaService {
   constructor(
     private prismaService: PrismaService,
     private errorService: ErrorService,
-  ) { }
+  ) {}
 
   async createUnitKerja(payload: CreateUnitKerjaDto) {
     await this.checkKodeMustUnique(payload.kode);
@@ -33,17 +33,28 @@ export class UnitKerjaService {
           contains: query.name || undefined,
         },
       },
-      skip: (query.page - 1) * query.size,
-      take: query.size,
+      ...(query.size && {
+        skip: (query.page - 1) * query.size,
+        take: query.size || undefined,
+      }),
       select: this.unitKerjaSelectCondition,
+    });
+
+    const total = await this.prismaService.unit_Kerja.count({
+      where: {
+        nama: {
+          contains: query.name || undefined,
+        },
+      },
     });
 
     return {
       data: unitKerja.map((uk) => uk),
       paging: {
-        size: query.size,
+        size: query.size || total,
         currentPage: query.page,
-        totalPage: Math.ceil(unitKerja.length / query.size),
+        totalPage: query.size ? Math.ceil(total / query.size) : 1,
+        totalItem: total,
       },
     };
   }

@@ -11,7 +11,7 @@ export class JabatanService {
   constructor(
     private prismaService: PrismaService,
     private errorService: ErrorService,
-  ) { }
+  ) {}
 
   async createPosition(payload: CreateJabatanDto) {
     await this.checkKodeMustUnique(payload.kode);
@@ -33,17 +33,28 @@ export class JabatanService {
           contains: query.name || undefined,
         },
       },
-      skip: (query.page - 1) * query.size,
-      take: query.size,
+      ...(query.size && {
+        skip: (query.page - 1) * query.size,
+        take: query.size,
+      }),
       select: this.positionSelectCondition,
+    });
+
+    const total = await this.prismaService.jabatan.count({
+      where: {
+        nama: {
+          contains: query.name || undefined,
+        },
+      },
     });
 
     return {
       data: positions.map((position) => position),
       paging: {
-        size: query.size,
+        size: query.size || total,
         currentPage: query.page,
-        totalPage: Math.ceil(positions.length / query.size),
+        totalPage: query.size ? Math.ceil(total / query.size) : 1,
+        totalItem: total,
       },
     };
   }

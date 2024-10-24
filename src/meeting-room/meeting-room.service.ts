@@ -31,17 +31,28 @@ export class MeetingRoomService {
           contains: query.name || undefined,
         },
       },
-      skip: (query.page - 1) * query.size,
-      take: query.size,
+      ...(query.size && {
+        skip: (query.page - 1) * query.size,
+        take: query.size,
+      }),
       select: this.meetingRoomSelectCondtion,
     });
 
+    const total = await this.prismaService.ruangan_Rapat.count({
+      where: {
+        nama: {
+          contains: query.name || undefined,
+        },
+      },
+    });
+
     return {
-      data: meetingRooms.map((position) => position),
+      data: meetingRooms.map((meetingRoom) => meetingRoom),
       paging: {
-        size: query.size,
+        size: query.size || total,
         currentPage: query.page,
-        totalPage: Math.ceil(meetingRooms.length / query.size),
+        totalPage: query.size ? Math.ceil(total / query.size) : 1,
+        totalItem: total,
       },
     };
   }

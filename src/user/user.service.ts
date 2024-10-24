@@ -209,6 +209,44 @@ export class UserService {
     return this.userHelper.toUserResponse(request, updateUser);
   }
 
+  async updateProfile() {}
+
+  async changePassword(auth: IAuth, payload) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: auth.id,
+      },
+      select: {
+        password: true,
+      },
+    });
+
+    if (!user) {
+      this.errorService.unauthorized('kredensial tidak valid');
+    }
+
+    const isOldPasswordValid = await bcrypt.compare(
+      payload.oldPassword,
+      user.password,
+    );
+
+    if (!isOldPasswordValid) {
+      this.errorService.badRequest('Kata Sandi Lama Salah');
+    }
+
+    await this.prismaService.user.update({
+      where: {
+        id: auth.id,
+      },
+      data: {
+        password: await bcrypt.hash(payload.newPassword, 10),
+      },
+      select: {
+        id: true,
+      },
+    });
+  }
+
   async deleteUser() {}
 
   async login(payload: LoginDto) {
