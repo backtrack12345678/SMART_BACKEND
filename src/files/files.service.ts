@@ -1,17 +1,26 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { join } from 'path';
 import * as fs from 'fs';
+import { ErrorService } from '../common/error/error.service';
+import { fromFile } from 'file-type';
 
 @Injectable()
 export class FilesService {
-  getFile(filename: string, folder: string) {
+  constructor(private errorService: ErrorService) {}
+
+  async serveFile(filename: string, folder: string) {
     const filePath = join(process.cwd(), `uploads/${folder}/${filename}`);
 
     if (!fs.existsSync(filePath)) {
-      throw new NotFoundException('File Tidak Ditemukan');
+      this.errorService.notFound('File Tidak Ditemukan');
     }
 
-    return fs.createReadStream(filePath);
+    if (['bukti-absensi', 'tanda-tangan'].includes(filename)) {
+    }
+
+    const { mime } = await fromFile(filePath);
+    const fileStream = fs.createReadStream(filePath);
+    return { fileStream, mime };
   }
 
   deleteFile(file: Express.Multer.File | { path: string }): void {

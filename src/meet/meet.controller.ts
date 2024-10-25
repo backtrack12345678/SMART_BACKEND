@@ -211,7 +211,13 @@ export class MeetController {
         { name: 'tandaTangan', maxCount: 1 },
       ],
       {
-        dest: './uploads/absensi',
+        dest: (req, file, cb) => {
+          const folder =
+            file.fieldname === 'buktiAbsensi'
+              ? './uploads/bukti-absensi'
+              : './uploads/tanda-tangan';
+          cb(null, folder);
+        },
       },
     ),
   )
@@ -232,8 +238,6 @@ export class MeetController {
       tandaTangan: Express.Multer.File[];
     },
   ) {
-    // return;
-
     await this.meetService.meetingAttendance(request, meetingId, files);
     return {
       status: 'success',

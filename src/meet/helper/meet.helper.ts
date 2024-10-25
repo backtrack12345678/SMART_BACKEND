@@ -209,24 +209,24 @@ export class MeetHelper {
     },
   };
 
-  toParticipantsResponse(request, participant) {
+  toParticipantsResponse(request, participant, absensi?) {
     return {
-      id: participant.user.id,
-      nama: participant.user.userData.nama,
-      nip: participant.user.userData.nip,
+      id: participant.id,
+      nama: participant.userData.nama,
+      nip: participant.userData.nip,
       kehadiran:
-        participant.user.anggotaRapat.length > 0 &&
-        participant.user.anggotaRapat.some((anggota) => anggota.kehadiran)
+        participant.anggotaRapat.length > 0 &&
+        participant.anggotaRapat.some((anggota) => anggota.kehadiran)
           ? 'Hadir'
           : 'Tidak Hadir',
       jabatan: {
-        id: participant.user.userData.jabatan?.id,
-        nama: participant.user.userData.jabatan?.nama,
+        id: participant.userData.jabatan?.id,
+        nama: participant.userData.jabatan?.nama,
       },
-      photo: `${getHost(request)}/api/files/user/${participant.user.userData.photo}`,
+      photo: `${getHost(request)}/api/files/user/${participant.userData.photo}`,
       ...(request.user.role !== 'user' && {
-        buktiAbsensi: `${getHost(request)}/api/files/absensi/${participant.buktiAbsensi.nama}`,
-        tandaTangan: `${getHost(request)}/api/files/absensi/${participant.tandaTangan.nama}`,
+        buktiAbsensi: `${getHost(request)}/api/files/bukti-absensi/${absensi?.buktiAbsensi?.nama}`,
+        tandaTangan: `${getHost(request)}/api/files/tanda-tangan/${absensi?.tandaTangan?.nama}`,
       }),
     };
   }

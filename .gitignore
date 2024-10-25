@@ -59,12 +59,14 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 #hide 
 uploads/user/*
 uploads/surat/*
-uploads/absensi/*
+uploads/bukti-absensi/*
+uploads/tanda-tangan/*
 
 
 #unhide
 !uploads/user/.gitkeep
 !uploads/surat/.gitkeep
-!uploads/absensi/.gitkeep
+!uploads/bukti-absensi/.gitkeep
+!uploads/tanda-tangan/.gitkeep
 
 

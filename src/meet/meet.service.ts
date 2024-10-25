@@ -423,9 +423,17 @@ export class MeetService {
     });
 
     return {
-      data: participants.map((participant) =>
-        this.meetHelper.toParticipantsResponse(request, participant),
-      ),
+      data: participants.map((participant) => {
+        const absensi = {
+          buktiAbsensi: participant.buktiAbsensi,
+          tandaTangan: participant.tandaTangan,
+        };
+        return this.meetHelper.toParticipantsResponse(
+          request,
+          participant.user,
+          absensi,
+        );
+      }),
       ...(query.page && {
         paging: {
           size: query.size,
@@ -520,4 +528,6 @@ export class MeetService {
       this.fileService.deleteFile(oldAttendanceFiles.tandaTangan);
     }
   }
+
+  async canViewMeetingAttendanceFile(auth: IAuth, filename: string) {}
 }
