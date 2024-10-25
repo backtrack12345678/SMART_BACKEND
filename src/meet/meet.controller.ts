@@ -81,7 +81,6 @@ export class MeetController {
   // }
 
   @Auth()
-  @Roles(Role.ADMIN, Role.OPERATOR)
   @Get('/:meetingId')
   async findOneMeeting(
     @Req() request: Request,
