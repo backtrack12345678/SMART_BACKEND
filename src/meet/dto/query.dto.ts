@@ -6,6 +6,7 @@ import {
   IsPositive,
   Matches,
   IsDate,
+  IsIn,
 } from 'class-validator';
 
 export class GetMeetingByUserQueryDto {
@@ -32,6 +33,11 @@ export class GetMeetingByUserQueryDto {
   @IsString()
   @Matches(/^\d{4}-\d{2}$/, { message: 'Format bulan harus YYYY-MM' }) // Validasi format YYYY-MM
   month?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['offline', 'online'])
+  tipe?: string;
 }
 
 export class GetParticipantsQueryDto {

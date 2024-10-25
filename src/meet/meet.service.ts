@@ -119,6 +119,7 @@ export class MeetService {
           },
           status: 'Selesai',
         }),
+        tipe: query.tipe || undefined,
         anggota: {
           some: {
             userId: request.user.id,
@@ -177,6 +178,7 @@ export class MeetService {
       },
     },
     status: true,
+    tipe: true,
     surat: true,
     mulai: true,
     selesai: true,
@@ -205,6 +207,7 @@ export class MeetService {
       nama: meeting.nama,
       deskripsi: meeting.deskripsi,
       status: meeting.status,
+      tipe: meeting.tipe,
       mulai: meeting.mulai,
       selesai: meeting.selesai,
       unitKerja: {
