@@ -62,7 +62,7 @@ export class MeetService {
     const meeting = await this.prismaService.rapat.create({
       data: {
         id: `rapat-${uuid().toString()}`,
-        userId: 'user-48a24b97-b1c2-40f8-8289-d14486b70543',
+        userId: user.id,
         ...dataRapat,
         ...(dataRapat.tipe === 'offline'
           ? {
