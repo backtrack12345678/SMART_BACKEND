@@ -15,7 +15,11 @@ import {
   UploadedFiles,
 } from '@nestjs/common';
 import { MeetService } from './meet.service';
-import { AddParticipantsDto, CreateMeetDto } from './dto/create-meet.dto';
+import {
+  AddParticipantsDto,
+  CreateMeetDto,
+  CreateMeetingReportDto,
+} from './dto/create-meet.dto';
 import { UpdateMeetDto } from './dto/update-meet.dto';
 import {
   FileFieldsInterceptor,
@@ -241,6 +245,25 @@ export class MeetController {
     return {
       status: 'success',
       message: 'Berhasil Absensi',
+    };
+  }
+
+  @Auth()
+  @Post('/:meetingId/report')
+  async createMeetingReport(
+    @Req() request,
+    @Param('meetingId') meetingId: string,
+    @Body() payload: CreateMeetingReportDto,
+  ) {
+    const result = await this.meetService.createMeetingReport(
+      request,
+      meetingId,
+      payload,
+    );
+    return {
+      status: 'success',
+      message: 'Laporan Rapat Berhasil Dibuat',
+      data: result,
     };
   }
 }

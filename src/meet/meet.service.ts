@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { AddParticipantsDto, CreateMeetDto } from './dto/create-meet.dto';
+import {
+  AddParticipantsDto,
+  CreateMeetDto,
+  CreateMeetingReportDto,
+} from './dto/create-meet.dto';
 import { UpdateMeetDto } from './dto/update-meet.dto';
 import { MeetHelper } from './helper/meet.helper';
 import { ErrorService } from '../common/error/error.service';
@@ -145,12 +149,25 @@ export class MeetService {
       where: {
         id: meetingId,
       },
-      select: this.meetingSelectCondition,
+      select: {
+        ...this.meetingSelectCondition,
+        laporan: {
+          select: {
+            notulensi: true,
+          },
+        },
+      },
     });
 
     if (!meeting) {
       this.errorService.notFound('Rapat Tidak Ditemukan');
     }
+
+    const total = await this.prismaService.anggota_Rapat.count({
+      where: {
+        rapatId: meetingId,
+      },
+    });
 
     if (user.role === 'pengurus') {
       if (user.unitKerjaId !== meeting.unitKerja.id) {
@@ -161,10 +178,14 @@ export class MeetService {
     }
 
     if (user.role === 'user') {
-      this.meetHelper.checkMeetingParticipant(meetingId, user.id);
+      await this.meetHelper.checkMeetingParticipant(meetingId, user.id);
     }
 
-    return this.toMeetingResponse(request, meeting, type);
+    return {
+      ...this.toMeetingResponse(request, meeting, type),
+      jumlahPeserta: total,
+      laporan: meeting.laporan || [],
+    };
   }
 
   meetingSelectCondition = {
@@ -532,5 +553,30 @@ export class MeetService {
     }
   }
 
-  async canViewMeetingAttendanceFile(auth: IAuth, filename: string) {}
+  async createMeetingReport(
+    request,
+    meetingId: string,
+    payload: CreateMeetingReportDto,
+  ) {
+    const meeting = await this.findOneMeeting(request, meetingId);
+
+    if (meeting.status !== 'Selesai') {
+      this.errorService.badRequest(
+        'Tidak Bisa Membuat Laporan, Rapat Belum Selesai',
+      );
+    }
+
+    const meetingReport = await this.prismaService.laporan_Rapat.create({
+      data: {
+        rapatId: meetingId,
+        ...payload,
+      },
+      select: {
+        id: true,
+        notulensi: true,
+      },
+    });
+
+    return meetingReport;
+  }
 }

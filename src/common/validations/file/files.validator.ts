@@ -12,7 +12,7 @@ export class FilesTypeValidator extends FileValidator {
     for (const fieldname in files) {
       const fileArray = files[fieldname];
       for (const file of fileArray) {
-        const { ext, mime } = await fromFile(file.path);
+        const { ext = '', mime = '' } = await fromFile(file.path);
         const allowedExtensions: string[] = this.mimeTypesToExtensions(
           this.validationOptions.mimeTypes[fieldname],
         );

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Res } from '@nestjs/common';
+import { Controller, Get, Param, Req, Res } from '@nestjs/common';
 import { FilesService } from './files.service';
 import { Response } from 'express';
 import { Auth } from '../common/auth/auth.decorator';
@@ -25,11 +25,13 @@ export class FilesController {
   @Get('/bukti-absensi/:filename')
   async getUserAttendanceProof(
     @Param('filename') filename: string,
+    @Req() request,
     @Res() response: Response,
   ) {
     const { fileStream, mime } = await this.filesService.serveFile(
       filename,
       'bukti-absensi',
+      request.user,
     );
     response.setHeader('Content-Type', mime);
     fileStream.pipe(response);
@@ -39,11 +41,13 @@ export class FilesController {
   @Get('/tanda-tangan/:filename')
   async getUserSignature(
     @Param('filename') filename: string,
+    @Req() request,
     @Res() response: Response,
   ) {
     const { fileStream, mime } = await this.filesService.serveFile(
       filename,
       'tanda-tangan',
+      request.user,
     );
     response.setHeader('Content-Type', mime);
     fileStream.pipe(response);

@@ -3,19 +3,25 @@ import { join } from 'path';
 import * as fs from 'fs';
 import { ErrorService } from '../common/error/error.service';
 import { fromFile } from 'file-type';
+import { PrismaService } from '../common/prisma/prisma.service';
+import { IAuth } from '../common/model/web.model';
 
 @Injectable()
 export class FilesService {
-  constructor(private errorService: ErrorService) {}
+  constructor(
+    private errorService: ErrorService,
+    private prismaService: PrismaService,
+  ) {}
 
-  async serveFile(filename: string, folder: string) {
+  async serveFile(filename: string, folder: string, auth?: IAuth) {
     const filePath = join(process.cwd(), `uploads/${folder}/${filename}`);
 
     if (!fs.existsSync(filePath)) {
       this.errorService.notFound('File Tidak Ditemukan');
     }
 
-    if (['bukti-absensi', 'tanda-tangan'].includes(filename)) {
+    if (['bukti-absensi', 'tanda-tangan'].includes(folder)) {
+      await this.checkMeetingAttendanceFilesAccess(auth, filename, folder);
     }
 
     const { mime } = await fromFile(filePath);
@@ -77,4 +83,70 @@ export class FilesService {
       console.error('Invalid file input');
     }
   }
+
+  async checkMeetingAttendanceFilesAccess(
+    auth: IAuth,
+    filename: string,
+    type: string,
+  ) {
+    let meetingAttendance;
+    const message = {
+      'bukti-absensi': 'Bukti Absensi',
+      'tanda-tangan': 'Tanda Tangan',
+    };
+
+    if (type === 'bukti-absensi') {
+      meetingAttendance =
+        await this.prismaService.bukti_Absensi_Rapat.findFirst({
+          where: {
+            nama: filename,
+          },
+          select: this.meetingAttendanceSelectCondition,
+        });
+    }
+
+    if (type === 'tanda-tangan') {
+      meetingAttendance = await this.prismaService.tanda_Tangan_Rapat.findFirst(
+        {
+          where: {
+            nama: filename,
+          },
+          select: this.meetingAttendanceSelectCondition,
+        },
+      );
+    }
+
+    console.log(meetingAttendance);
+
+    if (auth.role === 'user') {
+      if (auth.id !== meetingAttendance.anggotaRapat.userId) {
+        this.errorService.forbidden(
+          `Tidak Dapat Melihat ${message[type]} Milik Peserta Lain`,
+        );
+      }
+    }
+
+    if (auth.role === 'operator') {
+      if (
+        auth.unitKerjaId !== meetingAttendance.anggotRapat.rapat.unitKerjaId
+      ) {
+        this.errorService.forbidden(
+          `Tidak Dapat Melihat Dari ${message[type]} Unit Kerja Lain`,
+        );
+      }
+    }
+  }
+
+  meetingAttendanceSelectCondition = {
+    anggotaRapat: {
+      select: {
+        userId: true,
+        rapat: {
+          select: {
+            unitKerjaId: true,
+          },
+        },
+      },
+    },
+  };
 }

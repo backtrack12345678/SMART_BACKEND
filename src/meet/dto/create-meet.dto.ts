@@ -70,3 +70,9 @@ export class AddParticipantsDto {
   @IsString({ each: true })
   anggota: string[];
 }
+
+export class CreateMeetingReportDto {
+  @IsNotEmpty()
+  @IsString()
+  notulensi: string;
+}
