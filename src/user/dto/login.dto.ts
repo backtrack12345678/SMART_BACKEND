@@ -23,5 +23,5 @@ export class LoginDto {
   @Matches(/^ExponentPushToken/, {
     message: 'notificationToken must start with "ExponentPushToken"',
   })
-  notificationToken: string;
+  notificationToken?: string;
 }
