@@ -9,6 +9,8 @@ import { ErrorService } from './error/error.service';
 import { AuthGuard } from './auth/auth.guard';
 import { RoleGuard } from './role/role.guard';
 import { ValidationService } from './validation/validation.service';
+import { NotificationService } from './notification/notification.service';
+import { AxiosService } from './axios/axios.service';
 
 @Global()
 @Module({
@@ -39,7 +41,14 @@ import { ValidationService } from './validation/validation.service';
       useClass: ErrorFilter,
     },
     ValidationService,
+    NotificationService,
+    AxiosService,
   ],
-  exports: [PrismaService, ErrorService, ValidationService],
+  exports: [
+    PrismaService,
+    ErrorService,
+    ValidationService,
+    NotificationService,
+  ],
 })
 export class CommonModule {}

@@ -18,6 +18,7 @@ import {
   GetParticipantsQueryDto,
 } from './dto/query.dto';
 import { UpdateMeetingStatusDto } from './dto/param.dto';
+import { NotificationService } from '../common/notification/notification.service';
 
 @Injectable()
 export class MeetService {
@@ -27,6 +28,7 @@ export class MeetService {
     private prismaService: PrismaService,
     private validationService: ValidationService,
     private fileService: FilesService,
+    private notificationService: NotificationService,
   ) {}
 
   async createMeeting(
@@ -237,9 +239,9 @@ export class MeetService {
       },
       surat: {
         no: meeting.surat,
-        bukti: `${getHost(request)}/api/files/surat/${meeting.buktiSurat.nama}`,
+        bukti: `${getHost(request)}/api/files/surat/${meeting.buktiSurat?.nama}`,
         ...(type === 'update' && {
-          path: meeting.buktiSurat.path,
+          path: meeting.buktiSurat?.path,
         }),
       },
       lokasi: {
@@ -390,6 +392,28 @@ export class MeetService {
         userId: userId,
       })),
     });
+
+    let participantsNotifToken =
+      await this.prismaService.refresh_Token.findMany({
+        where: {
+          userId: {
+            in: payload.anggota,
+          },
+        },
+        select: {
+          notificationToken: true,
+        },
+      });
+    const filteredToken =
+      participantsNotifToken.length === 0
+        ? []
+        : participantsNotifToken
+            .filter((item) => item.notificationToken !== null)
+            .map((item) => item.notificationToken);
+
+    if (filteredToken.length !== 0) {
+      await this.notificationService.meeting(filteredToken, meeting);
+    }
 
     return participants;
   }
