@@ -17,7 +17,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto, UpdateUserDto } from './dto/update-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { WebResponse } from '../common/model/web.model';
 import { GetAllUsersQueryDto } from './dto/get.dto';
@@ -149,8 +149,8 @@ export class UserController {
 
   @Auth()
   @Patch('/change-password')
-  async changePassword(@Req() request, @Body() payload) {
-    await this.userService.changePassword(request, payload);
+  async changePassword(@Req() request, @Body() payload: ChangePasswordDto) {
+    await this.userService.changePassword(request.user, payload);
     return {
       status: 'success',
       message: 'Kata Sandi Berhasil Diubah',
