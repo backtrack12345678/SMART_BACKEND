@@ -20,7 +20,7 @@ export class NotificationService {
           [
             {
               to: batch, // Menggunakan batch yang benar
-              title: `Rapat ${meeting.judul}`,
+              title: `Rapat ${meeting.nama}`,
               body: 'Anda Diundang Untuk Hadir, Ketuk Untuk Melihat',
               priority: 'high',
               data: {

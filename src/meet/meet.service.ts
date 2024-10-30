@@ -139,10 +139,17 @@ export class MeetService {
           id: query.cursor,
         },
       }),
-      select: this.meetingSelectCondition,
+      select: {
+        ...this.meetingSelectCondition,
+      },
     });
 
-    return meetings.map((meeting) => this.toMeetingResponse(request, meeting));
+    return meetings.map((meeting) => ({
+      ...this.toMeetingResponse(request, meeting),
+      kehadiran: meeting.anggota.some((anggota) => anggota.kehadiran)
+        ? 'Hadir'
+        : 'Tidak Hadir',
+    }));
   }
 
   async findOneMeeting(request, meetingId: string, type?: string) {
@@ -165,11 +172,13 @@ export class MeetService {
       this.errorService.notFound('Rapat Tidak Ditemukan');
     }
 
-    const total = await this.prismaService.anggota_Rapat.count({
-      where: {
-        rapatId: meetingId,
-      },
-    });
+    const presentParticipants = meeting.anggota.filter(
+      (anggota) => anggota.kehadiran,
+    ).length;
+    const absentParticipants = meeting.anggota.filter(
+      (anggota) => !anggota.kehadiran,
+    ).length;
+    const totalParticipants = presentParticipants + absentParticipants;
 
     if (user.role === 'pengurus') {
       if (user.unitKerjaId !== meeting.unitKerja.id) {
@@ -185,7 +194,11 @@ export class MeetService {
 
     return {
       ...this.toMeetingResponse(request, meeting, type),
-      jumlahPeserta: total,
+      jumlahPeserta: {
+        hadir: presentParticipants,
+        tidakHadir: absentParticipants,
+        total: totalParticipants,
+      },
       laporan: meeting.laporan || [],
     };
   }
@@ -220,6 +233,11 @@ export class MeetService {
     rapatOnline: {
       select: {
         link: true,
+      },
+    },
+    anggota: {
+      select: {
+        kehadiran: true,
       },
     },
   };

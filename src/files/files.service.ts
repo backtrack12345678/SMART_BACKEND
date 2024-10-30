@@ -24,6 +24,10 @@ export class FilesService {
       await this.checkMeetingAttendanceFilesAccess(auth, filename, folder);
     }
 
+    if (folder === 'surat') {
+      await this.checkMeetingDocumentFileAccess(auth, filename);
+    }
+
     const { mime } = await fromFile(filePath);
     const fileStream = fs.createReadStream(filePath);
     return { fileStream, mime };
@@ -116,8 +120,6 @@ export class FilesService {
       );
     }
 
-    console.log(meetingAttendance);
-
     if (auth.role === 'user') {
       if (auth.id !== meetingAttendance.anggotaRapat.userId) {
         this.errorService.forbidden(
@@ -149,4 +151,35 @@ export class FilesService {
       },
     },
   };
+
+  async checkMeetingDocumentFileAccess(auth: IAuth, filename: string) {
+    const document = await this.prismaService.bukti_Surat_Rapat.findFirst({
+      where: {
+        nama: filename,
+        rapat: {
+          ...(auth.role === 'user' && {
+            anggota: {
+              some: {
+                userId: auth.id || undefined,
+              },
+            },
+          }),
+          ...(auth.role === 'operator' && {
+            unitKerjaId:
+              auth.role === 'operator' ? auth.unitKerjaId : undefined,
+          }),
+        },
+      },
+    });
+
+    if (!document) {
+      const message = {
+        user: 'Karena Bukan Peserta',
+        operator: 'Dari Unit Kerja Lain',
+      };
+      this.errorService.forbidden(
+        `Tidak Dapat Melihat Dokumen Rapat ${message[auth.role]}`,
+      );
+    }
+  }
 }

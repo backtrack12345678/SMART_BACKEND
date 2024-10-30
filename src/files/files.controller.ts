@@ -52,4 +52,20 @@ export class FilesController {
     response.setHeader('Content-Type', mime);
     fileStream.pipe(response);
   }
+
+  @Auth()
+  @Get('/surat/:filename')
+  async getMeetingDocument(
+    @Param('filename') filename: string,
+    @Req() request,
+    @Res() response,
+  ) {
+    const { fileStream, mime } = await this.filesService.serveFile(
+      filename,
+      'surat',
+      request.user,
+    );
+    response.setHeader('Content-Type', mime);
+    fileStream.pipe(response);
+  }
 }
