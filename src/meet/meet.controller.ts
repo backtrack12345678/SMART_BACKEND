@@ -29,7 +29,10 @@ import { FileTypeValidator } from '../common/validations/file/file.validator';
 import { Role } from '../common/role/role.enum';
 import { Auth } from '../common/auth/auth.decorator';
 import { Roles } from '../common/role/role.decorator';
-import { GetParticipantsQueryDto } from './dto/query.dto';
+import {
+  GetAllMeetingQueryDto,
+  GetParticipantsQueryDto,
+} from './dto/query.dto';
 import { UpdateMeetingStatusDto } from './dto/param.dto';
 import { FilesTypeValidator } from '../common/validations/file/files.validator';
 
@@ -77,12 +80,17 @@ export class MeetController {
     };
   }
 
-  // @Auth()
-  // @Roles(Role.ADMIN, Role.OPERATOR)
-  // @Get()
-  // findAll() {
-  //   return this.meetService.findAll();
-  // }
+  @Auth()
+  @Roles(Role.ADMIN, Role.OPERATOR)
+  @Get()
+  async findAllMeeting(@Req() request, @Query() query: GetAllMeetingQueryDto) {
+    const result = await this.meetService.findAllMeeting(request, query);
+    return {
+      status: 'success',
+      paging: result.paging,
+      data: result.data,
+    };
+  }
 
   @Auth()
   @Get('/:meetingId')

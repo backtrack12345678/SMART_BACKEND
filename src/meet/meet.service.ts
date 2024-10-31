@@ -14,6 +14,7 @@ import { IAuth } from '../common/model/web.model';
 import { getHost } from '../common/utlis/utils';
 import { FilesService } from '../files/files.service';
 import {
+  GetAllMeetingQueryDto,
   GetMeetingByUserQueryDto,
   GetParticipantsQueryDto,
 } from './dto/query.dto';
@@ -96,6 +97,42 @@ export class MeetService {
     });
 
     return this.toMeetingResponse(request, meeting);
+  }
+
+  async findAllMeeting(request, query: GetAllMeetingQueryDto) {
+    const auth: IAuth = request.user;
+    const meetings = await this.prismaService.rapat.findMany({
+      where: {
+        nama: {
+          contains: query.name || undefined,
+        },
+        unitKerjaId: auth.role === 'pengurus' ? auth.unitKerjaId : undefined,
+      },
+      ...(query.size && {
+        skip: (query.page - 1) * query.size,
+        take: query.size,
+      }),
+      select: this.meetingSelectCondition,
+    });
+
+    const total = await this.prismaService.rapat.count({
+      where: {
+        nama: {
+          contains: query.name || undefined,
+        },
+        unitKerjaId: auth.role === 'pengurus' ? auth.unitKerjaId : undefined,
+      },
+    });
+
+    return {
+      data: meetings.map((meeting) => this.toMeetingResponse(request, meeting)),
+      paging: {
+        size: query.size || total,
+        currentPage: query.page,
+        totalPage: query.size ? Math.ceil(total / query.size) : 1,
+        totalItem: total,
+      },
+    };
   }
 
   async findAllMeetingByUser(request, query: GetMeetingByUserQueryDto) {

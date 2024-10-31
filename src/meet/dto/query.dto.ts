@@ -9,6 +9,24 @@ import {
   IsIn,
 } from 'class-validator';
 
+export class GetAllMeetingQueryDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  @Transform(({ value }) => parseInt(value, 10))
+  size?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  @Transform(({ value }) => parseInt(value, 10))
+  page?: number = 1;
+}
+
 export class GetMeetingByUserQueryDto {
   @IsOptional()
   @IsString()
