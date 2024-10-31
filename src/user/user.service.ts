@@ -13,6 +13,7 @@ import { GetAllUsersQueryDto } from './dto/get.dto';
 import { FilesService } from '../files/files.service';
 import { UserHelper } from './helper/user.helper';
 import { ConfigService } from '@nestjs/config';
+import { UpdateUserProfileDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -177,6 +178,10 @@ export class UserService {
       await this.userHelper.updateUserForOperator(user, updatedUser, payload);
     }
 
+    const oldPhoto = photo
+      ? await this.userHelper.getUserPhoto(updatedUser.id)
+      : '';
+
     const updateUser = await this.prismaService.user.update({
       where: {
         id: updatedUserId,
@@ -198,10 +203,6 @@ export class UserService {
       select: this.userHelper.userSelectCondition,
     });
 
-    const oldPhoto = photo
-      ? await this.userHelper.getUserPhoto(updatedUser.id)
-      : '';
-
     if (oldPhoto && oldPhoto.photo !== 'default_user.jpg') {
       this.fileService.deleteFile(oldPhoto);
     }
@@ -209,7 +210,47 @@ export class UserService {
     return this.userHelper.toUserResponse(request, updateUser);
   }
 
-  async updateProfile() {}
+  async updateUserProfile(
+    request,
+    payload?: UpdateUserProfileDto,
+    photo?: Express.Multer.File,
+  ) {
+    if (Object.keys(payload).length === 0 && !photo) {
+      this.errorService.badRequest('Body Tidak Boleh Kosong');
+    }
+
+    if (payload.phone)
+      await this.userHelper.checkPhoneMustUnique(payload.phone);
+
+    return await this.prismaService.$transaction(async (prisma) => {
+      const auth: IAuth = request.user;
+      const oldPhoto = photo ? await this.userHelper.getUserPhoto(auth.id) : '';
+
+      const { user } = await prisma.user_Data.update({
+        where: {
+          userId: auth.id,
+        },
+        data: {
+          ...payload,
+          ...(photo && {
+            photo: photo.filename,
+            path: photo.path,
+          }),
+        },
+        select: {
+          user: {
+            select: this.userHelper.userSelectCondition,
+          },
+        },
+      });
+
+      if (oldPhoto && oldPhoto.photo !== 'default_user.jpg') {
+        await this.fileService.deleteFile(oldPhoto);
+      }
+
+      return this.userHelper.toUserResponse(request, user);
+    });
+  }
 
   async changePassword(auth: IAuth, payload) {
     const user = await this.prismaService.user.findUnique({

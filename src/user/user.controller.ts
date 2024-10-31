@@ -17,7 +17,11 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { ChangePasswordDto, UpdateUserDto } from './dto/update-user.dto';
+import {
+  ChangePasswordDto,
+  UpdateUserDto,
+  UpdateUserProfileDto,
+} from './dto/update-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { WebResponse } from '../common/model/web.model';
 import { GetAllUsersQueryDto } from './dto/get.dto';
@@ -78,11 +82,11 @@ export class UserController {
     @Query() query: GetAllUsersQueryDto,
     @Req() request: Request,
   ) {
-    const { data, paging } = await this.userService.getAllUsers(request, query);
+    const result = await this.userService.getAllUsers(request, query);
     return {
       status: 'success',
-      data: data,
-      paging: paging,
+      paging: result.paging,
+      data: result.data,
     };
   }
 
@@ -133,9 +137,15 @@ export class UserController {
     @Body() payload: UpdateUserDto,
     @Req() request,
     @UploadedFile(
-      new ParseFilePipe({
-        fileIsRequired: false,
-      }),
+      new ParseFilePipeBuilder()
+        .addValidator(
+          new FileTypeValidator({
+            mimeTypes: allowedMimeTypes,
+          }),
+        )
+        .build({
+          fileIsRequired: false,
+        }),
     )
     photo?: Express.Multer.File,
   ) {
@@ -143,6 +153,41 @@ export class UserController {
     return {
       status: 'success',
       message: 'Pengguna Berhasil Diperbarui',
+      data: result,
+    };
+  }
+
+  @Auth()
+  @Patch('/profile')
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      dest: './uploads/user',
+    }),
+  )
+  async updateUserProfile(
+    @Req() request,
+    @Body() payload: UpdateUserProfileDto,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addValidator(
+          new FileTypeValidator({
+            mimeTypes: allowedMimeTypes,
+          }),
+        )
+        .build({
+          fileIsRequired: false,
+        }),
+    )
+    photo?: Express.Multer.File,
+  ) {
+    const result = await this.userService.updateUserProfile(
+      request,
+      payload,
+      photo,
+    );
+    return {
+      status: 'success',
+      message: 'Profile Pengguna Berhasil Diperbarui',
       data: result,
     };
   }

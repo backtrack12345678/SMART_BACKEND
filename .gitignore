@@ -64,7 +64,7 @@ uploads/tanda-tangan/*
 
 
 #unhide
-!uploads/user/.gitkeep
+!uploads/user/default_user.jpg
 !uploads/surat/.gitkeep
 !uploads/bukti-absensi/.gitkeep
 !uploads/tanda-tangan/.gitkeep
