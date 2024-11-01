@@ -197,11 +197,6 @@ export class MeetService {
       },
       select: {
         ...this.meetingSelectCondition,
-        laporan: {
-          select: {
-            notulensi: true,
-          },
-        },
       },
     });
 
@@ -236,7 +231,6 @@ export class MeetService {
         tidakHadir: absentParticipants,
         total: totalParticipants,
       },
-      laporan: meeting.laporan || [],
     };
   }
 
@@ -255,6 +249,7 @@ export class MeetService {
     surat: true,
     mulai: true,
     selesai: true,
+    laporan: true,
     createdAt: true,
     buktiSurat: {
       select: {
@@ -288,6 +283,7 @@ export class MeetService {
       tipe: meeting.tipe,
       mulai: meeting.mulai,
       selesai: meeting.selesai,
+      laporan: meeting.laporan,
       unitKerja: {
         id: meeting.unitKerja.id,
         nama: meeting.unitKerja.nama,
@@ -645,14 +641,15 @@ export class MeetService {
       );
     }
 
-    const meetingReport = await this.prismaService.laporan_Rapat.create({
+    const meetingReport = await this.prismaService.rapat.update({
+      where: {
+        id: meetingId,
+      },
       data: {
-        rapatId: meetingId,
-        ...payload,
+        laporan: payload.notulensi,
       },
       select: {
-        id: true,
-        notulensi: true,
+        laporan: true,
       },
     });
 

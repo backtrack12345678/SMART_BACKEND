@@ -131,10 +131,10 @@ model Rapat {
   surat        String             @db.VarChar(100)
   mulai        DateTime
   selesai      DateTime
+  laporan      String?            @db.Text
   createdAt    DateTime           @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
   updatedAt    DateTime?          @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
   buktiSurat   Bukti_Surat_Rapat?
-  laporan      Laporan_Rapat[]
   anggota      Anggota_Rapat[]
   rapatOffline Rapat_Offline?
   rapatOnline  Rapat_Online?
@@ -175,17 +175,6 @@ model Bukti_Surat_Rapat {
   updatedAt DateTime? @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
 
   @@map("bukti_surat_rapat")
-}
-
-model Laporan_Rapat {
-  id        Int       @id @default(autoincrement())
-  rapatId   String    @map("rapat_id") @db.VarChar(150)
-  rapat     Rapat     @relation(fields: [rapatId], references: [id], onDelete: Cascade)
-  notulensi String    @db.Text
-  createdAt DateTime  @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
-  updatedAt DateTime? @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
-
-  @@map("laporan_rapat")
 }
 
 model Anggota_Rapat {
