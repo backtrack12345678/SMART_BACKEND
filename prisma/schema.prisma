@@ -119,25 +119,26 @@ model Ruangan_Rapat {
 }
 
 model Rapat {
-  id           String             @id @db.VarChar(150)
-  userId       String             @map("user_id") @db.VarChar(150)
-  user         User               @relation(fields: [userId], references: [id])
-  nama         String             @db.VarChar(150)
-  deskripsi    String             @db.Text
-  tipe         String             @db.VarChar(10)
-  status       String             @default("Belum Dimulai") @db.VarChar(20)
-  unitKerjaId  Int                @map("unit_kerja_id")
-  unitKerja    Unit_Kerja         @relation(fields: [unitKerjaId], references: [id])
-  surat        String             @db.VarChar(100)
+  id           String              @id @db.VarChar(150)
+  userId       String              @map("user_id") @db.VarChar(150)
+  user         User                @relation(fields: [userId], references: [id])
+  nama         String              @db.VarChar(150)
+  deskripsi    String              @db.Text
+  tipe         String              @db.VarChar(10)
+  status       String              @default("Belum Dimulai") @db.VarChar(20)
+  unitKerjaId  Int                 @map("unit_kerja_id")
+  unitKerja    Unit_Kerja          @relation(fields: [unitKerjaId], references: [id])
+  surat        String              @db.VarChar(100)
   mulai        DateTime
   selesai      DateTime
-  laporan      String?            @db.Text
-  createdAt    DateTime           @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
-  updatedAt    DateTime?          @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
+  createdAt    DateTime            @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
+  updatedAt    DateTime?           @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
   buktiSurat   Bukti_Surat_Rapat?
+  laporan      Laporan_Rapat[]
   anggota      Anggota_Rapat[]
   rapatOffline Rapat_Offline?
   rapatOnline  Rapat_Online?
+  dokumentasi  Dokumentasi_Rapat[]
 
   @@map("rapat")
 }
@@ -177,6 +178,17 @@ model Bukti_Surat_Rapat {
   @@map("bukti_surat_rapat")
 }
 
+model Laporan_Rapat {
+  id        Int       @id @default(autoincrement())
+  rapatId   String    @map("rapat_id") @db.VarChar(150)
+  rapat     Rapat     @relation(fields: [rapatId], references: [id], onDelete: Cascade)
+  notulensi String    @db.Text
+  createdAt DateTime  @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
+  updatedAt DateTime? @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
+
+  @@map("laporan_rapat")
+}
+
 model Anggota_Rapat {
   id           Int                  @id @default(autoincrement())
   rapatId      String               @map("rapat_id") @db.VarChar(150)
@@ -214,4 +226,16 @@ model Tanda_Tangan_Rapat {
   updatedAt      DateTime?     @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
 
   @@map("tanda_tangan_rapat")
+}
+
+model Dokumentasi_Rapat {
+  id        Int       @id @default(autoincrement())
+  rapatId   String    @map("rapat_id") @db.VarChar(150)
+  rapat     Rapat     @relation(fields: [rapatId], references: [id], onDelete: Cascade)
+  nama      String    @db.VarChar(250)
+  path      String    @db.Text
+  createdAt DateTime  @default(dbgenerated("NOW()")) @map("created_at") @db.DateTime
+  updatedAt DateTime? @default(dbgenerated("NOW() ON UPDATE NOW()")) @map("updated_at") @db.DateTime
+
+  @@map("dokumentasi_rapat")
 }

@@ -20,6 +20,7 @@ import {
 } from './dto/query.dto';
 import { UpdateMeetingStatusDto } from './dto/param.dto';
 import { NotificationService } from '../common/notification/notification.service';
+import path from 'path';
 
 @Injectable()
 export class MeetService {
@@ -197,6 +198,17 @@ export class MeetService {
       },
       select: {
         ...this.meetingSelectCondition,
+        laporan: {
+          select: {
+            id: true,
+            notulensi: true,
+          },
+        },
+        dokumentasi: {
+          select: {
+            nama: true,
+          },
+        },
       },
     });
 
@@ -226,6 +238,10 @@ export class MeetService {
 
     return {
       ...this.toMeetingResponse(request, meeting, type),
+      laporan: meeting.laporan || [],
+      dokumentasi: meeting.dokumentasi?.map(
+        (d) => `${getHost(request)}/api/files/dokumentasi/${d.nama}`,
+      ),
       jumlahPeserta: {
         hadir: presentParticipants,
         tidakHadir: absentParticipants,
@@ -283,7 +299,6 @@ export class MeetService {
       tipe: meeting.tipe,
       mulai: meeting.mulai,
       selesai: meeting.selesai,
-      laporan: meeting.laporan,
       unitKerja: {
         id: meeting.unitKerja.id,
         nama: meeting.unitKerja.nama,
@@ -641,18 +656,45 @@ export class MeetService {
       );
     }
 
-    const meetingReport = await this.prismaService.rapat.update({
-      where: {
-        id: meetingId,
-      },
+    const meetingReport = await this.prismaService.laporan_Rapat.create({
       data: {
-        laporan: payload.notulensi,
+        rapatId: meetingId,
+        ...payload,
       },
       select: {
-        laporan: true,
+        id: true,
+        notulensi: true,
       },
     });
 
     return meetingReport;
+  }
+
+  async createMeetingDocumentations(
+    request,
+    meetingId: string,
+    documentations: Express.Multer.File[],
+  ) {
+    const meeting = await this.findOneMeeting(request, meetingId);
+
+    if (meeting.status !== 'Selesai') {
+      this.errorService.badRequest(
+        'Tidak Bisa Membuat Dokumentasi, Rapat Belum Selesai',
+      );
+    }
+
+    const meetingDocumentations =
+      await this.prismaService.dokumentasi_Rapat.createMany({
+        data: documentations.map((documentation) => ({
+          rapatId: meeting.id,
+          nama: documentation.filename,
+          path: documentation.path,
+        })),
+      });
+
+    return documentations.map(
+      (documentation) =>
+        `${getHost(request)}/api/files/dokumentasi/${documentation.filename}`,
+    );
   }
 }

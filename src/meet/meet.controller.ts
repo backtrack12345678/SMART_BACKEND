@@ -24,6 +24,7 @@ import { UpdateMeetDto } from './dto/update-meet.dto';
 import {
   FileFieldsInterceptor,
   FileInterceptor,
+  FilesInterceptor,
 } from '@nestjs/platform-express';
 import { FileTypeValidator } from '../common/validations/file/file.validator';
 import { Role } from '../common/role/role.enum';
@@ -36,10 +37,12 @@ import {
 import { UpdateMeetingStatusDto } from './dto/param.dto';
 import { FilesTypeValidator } from '../common/validations/file/files.validator';
 
+const images = ['image/png', 'image/jpg', 'image/jpeg'];
 const allowedMimeTypes = {
   buktiSurat: ['application/pdf'],
-  buktiAbsensi: ['image/png', 'image/jpg', 'image/jpeg'],
-  tandaTangan: ['image/png', 'image/jpg', 'image/jpeg'],
+  buktiAbsensi: images,
+  tandaTangan: images,
+  dokumentasi: images,
 };
 
 @Controller('/api/meeting')
@@ -257,6 +260,7 @@ export class MeetController {
   }
 
   @Auth()
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @Post('/:meetingId/report')
   async createMeetingReport(
     @Req() request,
@@ -271,6 +275,40 @@ export class MeetController {
     return {
       status: 'success',
       message: 'Laporan Rapat Berhasil Dibuat',
+      data: result,
+    };
+  }
+
+  @Auth()
+  @Roles(Role.ADMIN, Role.OPERATOR)
+  @Post('/:meetingId/documentations')
+  @UseInterceptors(
+    FilesInterceptor('dokumentasi', Infinity, {
+      dest: './uploads/dokumentasi',
+    }),
+  )
+  async createDocumentations(
+    @Req() request,
+    @Param('meetingId') meetingId: string,
+    @UploadedFiles(
+      new ParseFilePipeBuilder()
+        .addValidator(
+          new FileTypeValidator({
+            mimeTypes: allowedMimeTypes,
+          }),
+        )
+        .build(),
+    )
+    documentations: Express.Multer.File[],
+  ) {
+    const result = await this.meetService.createMeetingDocumentations(
+      request,
+      meetingId,
+      documentations,
+    );
+    return {
+      status: 'success',
+      message: 'Dokumentasi Berhasil Ditambahkan',
       data: result,
     };
   }

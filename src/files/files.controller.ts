@@ -68,4 +68,20 @@ export class FilesController {
     response.setHeader('Content-Type', mime);
     fileStream.pipe(response);
   }
+
+  @Auth()
+  @Get('/dokumentasi/:filename')
+  async getMeetingDocumentations(
+    @Param('filename') filename: string,
+    @Req() request,
+    @Res() response,
+  ) {
+    const { fileStream, mime } = await this.filesService.serveFile(
+      filename,
+      'dokumentasi',
+      request.user,
+    );
+    response.setHeader('Content-Type', mime);
+    fileStream.pipe(response);
+  }
 }

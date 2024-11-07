@@ -61,6 +61,7 @@ uploads/user/*
 uploads/surat/*
 uploads/bukti-absensi/*
 uploads/tanda-tangan/*
+uploads/dokumentasi/*
 
 
 #unhide
@@ -68,5 +69,6 @@ uploads/tanda-tangan/*
 !uploads/surat/.gitkeep
 !uploads/bukti-absensi/.gitkeep
 !uploads/tanda-tangan/.gitkeep
+!uploads/dokumentasi/.gitkeep
 
 
