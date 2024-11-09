@@ -72,7 +72,8 @@ export class AddParticipantsDto {
 }
 
 export class CreateMeetingReportDto {
-  @IsNotEmpty()
-  @IsString()
-  notulensi: string;
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  notulensi: string[];
 }

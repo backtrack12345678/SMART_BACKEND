@@ -656,15 +656,11 @@ export class MeetService {
       );
     }
 
-    const meetingReport = await this.prismaService.laporan_Rapat.create({
-      data: {
-        rapatId: meetingId,
-        ...payload,
-      },
-      select: {
-        id: true,
-        notulensi: true,
-      },
+    const meetingReport = await this.prismaService.laporan_Rapat.createMany({
+      data: payload.notulensi.map((notulensi) => ({
+        rapatId: meeting.id,
+        notulensi,
+      })),
     });
 
     return meetingReport;
