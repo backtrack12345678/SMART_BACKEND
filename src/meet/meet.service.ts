@@ -663,7 +663,17 @@ export class MeetService {
       })),
     });
 
-    return meetingReport;
+    const getMeetingReport = await this.prismaService.laporan_Rapat.findMany({
+      where: {
+        rapatId: meetingId,
+      },
+      select: {
+        id: true,
+        notulensi: true,
+      },
+    });
+
+    return getMeetingReport;
   }
 
   async createMeetingDocumentations(
