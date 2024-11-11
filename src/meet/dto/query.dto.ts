@@ -30,6 +30,12 @@ export class GetAllMeetingQueryDto {
   @IsString()
   @IsIn(['offline', 'online'])
   tipe?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  @Transform(({ value }) => parseInt(value, 10))
+  unitKerjaId?: number;
 }
 
 export class GetMeetingByUserQueryDto {
