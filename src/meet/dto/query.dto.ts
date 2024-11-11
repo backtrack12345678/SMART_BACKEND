@@ -25,6 +25,11 @@ export class GetAllMeetingQueryDto {
   @IsPositive()
   @Transform(({ value }) => parseInt(value, 10))
   page?: number = 1;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['offline', 'online'])
+  tipe?: string;
 }
 
 export class GetMeetingByUserQueryDto {

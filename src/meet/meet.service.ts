@@ -20,7 +20,6 @@ import {
 } from './dto/query.dto';
 import { UpdateMeetingStatusDto } from './dto/param.dto';
 import { NotificationService } from '../common/notification/notification.service';
-import path from 'path';
 
 @Injectable()
 export class MeetService {
@@ -108,6 +107,10 @@ export class MeetService {
           contains: query.name || undefined,
         },
         unitKerjaId: auth.role === 'pengurus' ? auth.unitKerjaId : undefined,
+        ...(auth.role === 'admin' && query.unitKerjaId
+          ? { unitKerjaId: query.unitKerjaId }
+          : {}),
+        tipe: query.tipe || undefined,
       },
       ...(query.size && {
         skip: (query.page - 1) * query.size,
