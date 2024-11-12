@@ -91,6 +91,21 @@ export class UserController {
   }
 
   @Auth()
+  @Roles(Role.ADMIN,Role.OPERATOR)
+  @Get('/list-participants')
+  async getAllParticipants(
+    @Query() query: GetAllUsersQueryDto,
+    @Req() request: Request,
+  ){
+    const result = await this.userService.getAllParticipants(request, query);
+    return {
+      status: 'success',
+      paging: result.paging,
+      data: result.data,
+    };
+  }
+
+  @Auth()
   @Get('/profile')
   async getProfile(@Req() request) {
     const result = await this.userService.findOneUser(request, request.user.id);

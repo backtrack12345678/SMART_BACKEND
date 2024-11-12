@@ -24,7 +24,7 @@ export class UserService {
     private userHelper: UserHelper,
     private fileService: FilesService,
     private configService: ConfigService,
-  ) {}
+  ) { }
 
   async createUser(
     request,
@@ -114,6 +114,37 @@ export class UserService {
       where: {
         userData: {
           unitKerjaId: user.role === 'operator' ? user.unitKerjaId : undefined,
+          nama: {
+            contains: query.name || undefined,
+          },
+        },
+      },
+      take: query.size,
+      skip: (query.page - 1) * query.size,
+      select: this.userHelper.userSelectCondition,
+    });
+
+    const total = users.length;
+
+    return {
+      data: users.map((user) => this.userHelper.toUserResponse(request, user)),
+      paging: {
+        size: total < query.size ? total : query.size,
+        currentPage: query.page,
+        totalPage: Math.ceil(total / query.size),
+      },
+    };
+  }
+
+  async getAllParticipants(request, query: GetAllUsersQueryDto) {
+    const user: IAuth = request.user;
+
+    const users = await this.prismaService.user.findMany({
+      where: {
+        id: {
+          contains: 'user',
+        },
+        userData: {
           nama: {
             contains: query.name || undefined,
           },
@@ -288,7 +319,7 @@ export class UserService {
     });
   }
 
-  async deleteUser() {}
+  async deleteUser() { }
 
   async login(payload: LoginDto) {
     const user = await this.prismaService.user.findUnique({
