@@ -30,7 +30,7 @@ export class MeetService {
     private validationService: ValidationService,
     private fileService: FilesService,
     private notificationService: NotificationService,
-  ) {}
+  ) { }
 
   async createMeeting(
     request,
@@ -73,19 +73,19 @@ export class MeetService {
         ...dataRapat,
         ...(dataRapat.tipe === 'offline'
           ? {
-              rapatOffline: {
-                create: {
-                  ruanganId: ruanganId,
-                },
+            rapatOffline: {
+              create: {
+                ruanganId: ruanganId,
               },
-            }
+            },
+          }
           : {
-              rapatOnline: {
-                create: {
-                  link: link,
-                },
+            rapatOnline: {
+              create: {
+                link: link,
               },
-            }),
+            },
+          }),
         buktiSurat: {
           create: {
             nama: buktiSurat.filename,
@@ -116,6 +116,9 @@ export class MeetService {
         skip: (query.page - 1) * query.size,
         take: query.size,
       }),
+      orderBy: {
+        status: 'asc',
+      },
       select: this.meetingSelectCondition,
     });
 
@@ -378,19 +381,19 @@ export class MeetService {
         ...dataRapat,
         ...(dataRapat.tipe === 'offline'
           ? {
-              rapatOffline: {
-                update: {
-                  ruanganId: ruanganId,
-                },
+            rapatOffline: {
+              update: {
+                ruanganId: ruanganId,
               },
-            }
+            },
+          }
           : {
-              rapatOnline: {
-                update: {
-                  link: link,
-                },
+            rapatOnline: {
+              update: {
+                link: link,
               },
-            }),
+            },
+          }),
         ...(buktiSurat && {
           buktiSurat: {
             update: {
@@ -477,8 +480,8 @@ export class MeetService {
       participantsNotifToken.length === 0
         ? []
         : participantsNotifToken
-            .filter((item) => item.notificationToken !== null)
-            .map((item) => item.notificationToken);
+          .filter((item) => item.notificationToken !== null)
+          .map((item) => item.notificationToken);
 
     if (filteredToken.length !== 0) {
       await this.notificationService.meeting(filteredToken, meeting);
