@@ -9,7 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { IAuth } from '../common/model/web.model';
 import { v4 as uuid } from 'uuid';
 import { CreateUserDto } from './dto/create-user.dto';
-import { GetAllUsersQueryDto } from './dto/get.dto';
+import { GetAllParticipantsQueryDto, GetAllUsersQueryDto } from './dto/get.dto';
 import { FilesService } from '../files/files.service';
 import { UserHelper } from './helper/user.helper';
 import { ConfigService } from '@nestjs/config';
@@ -136,7 +136,7 @@ export class UserService {
     };
   }
 
-  async getAllParticipants(request, query: GetAllUsersQueryDto) {
+  async getAllParticipants(request, query: GetAllParticipantsQueryDto) {
     const user: IAuth = request.user;
 
     const users = await this.prismaService.user.findMany({
@@ -148,19 +148,31 @@ export class UserService {
           },
         },
       },
-      take: query.size,
-      skip: (query.page - 1) * query.size,
+      ...(query.size && {
+        skip: (query.page - 1) * query.size,
+        take: query.size,
+      }),
       select: this.userHelper.userSelectCondition,
     });
 
-    const total = users.length;
+    const total = await this.prismaService.user.count({
+      where: {
+        role: "user",
+        userData: {
+          nama: {
+            contains: query.name || undefined,
+          },
+        },
+      },
+    });
 
     return {
       data: users.map((user) => this.userHelper.toUserResponse(request, user)),
       paging: {
-        size: total < query.size ? total : query.size,
+        size: query.size || total,
         currentPage: query.page,
-        totalPage: Math.ceil(total / query.size),
+        totalPage: query.size ? Math.ceil(total / query.size) : 1,
+        totalItem: total,
       },
     };
   }

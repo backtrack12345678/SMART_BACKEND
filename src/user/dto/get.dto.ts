@@ -18,3 +18,21 @@ export class GetAllUsersQueryDto {
   @Transform(({ value }) => parseInt(value, 10))
   size?: number = 12;
 }
+
+export class GetAllParticipantsQueryDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  @Transform(({ value }) => parseInt(value, 10))
+  page?: number = 1;
+
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  @Transform(({ value }) => parseInt(value, 10))
+  size?: number;
+}

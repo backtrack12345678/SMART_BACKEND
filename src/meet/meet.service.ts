@@ -117,7 +117,7 @@ export class MeetService {
         take: query.size,
       }),
       orderBy: {
-        status: 'asc',
+        createdAt: "desc",
       },
       select: this.meetingSelectCondition,
     });

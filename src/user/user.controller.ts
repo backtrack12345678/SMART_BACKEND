@@ -24,7 +24,7 @@ import {
 } from './dto/update-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { WebResponse } from '../common/model/web.model';
-import { GetAllUsersQueryDto } from './dto/get.dto';
+import { GetAllParticipantsQueryDto, GetAllUsersQueryDto } from './dto/get.dto';
 import { Auth } from '../common/auth/auth.decorator';
 import { FileTypeValidator } from '../common/validations/file/file.validator';
 import { Roles } from '../common/role/role.decorator';
@@ -94,7 +94,7 @@ export class UserController {
   @Roles(Role.ADMIN,Role.OPERATOR)
   @Get('/list-participants')
   async getAllParticipants(
-    @Query() query: GetAllUsersQueryDto,
+    @Query() query: GetAllParticipantsQueryDto,
     @Req() request: Request,
   ){
     const result = await this.userService.getAllParticipants(request, query);
