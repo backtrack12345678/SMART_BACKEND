@@ -589,6 +589,9 @@ export class MeetService {
   ) {
     const meeting = await this.findOneMeeting(request, meetingId);
     const currentTime = new Date();
+    // console.log(currentTime);
+    console.log(new Date(meeting.mulai));
+
     if (currentTime < new Date(meeting.mulai)) {
       this.errorService.badRequest('Tidak Bisa Absen, Rapat Belum Dimulai');
     }
