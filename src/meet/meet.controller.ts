@@ -279,6 +279,10 @@ export class MeetController {
     };
   }
 
+  // update meetingReport
+
+  // delete meetingReport
+
   @Auth()
   @Roles(Role.ADMIN, Role.OPERATOR)
   @Post('/:meetingId/documentations')
