@@ -141,9 +141,7 @@ export class UserService {
 
     const users = await this.prismaService.user.findMany({
       where: {
-        id: {
-          contains: 'user',
-        },
+        role: "user",
         userData: {
           nama: {
             contains: query.name || undefined,
