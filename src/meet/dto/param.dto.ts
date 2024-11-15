@@ -7,6 +7,6 @@ export class UpdateMeetingStatusDto {
 
   @IsNotEmpty()
   @IsString()
-  @IsIn(['Selesai'], { message: 'Status must be "Selesai".' })
+  @IsIn(['Selesai', 'Belum_Dimulai'], { message: 'Status must be "Selesai" or "Belum_Dimulai".' })
   status: string;
 }

@@ -17,4 +17,10 @@ export class GetSubUnitKerjaQueryDto {
   @IsPositive()
   @Transform(({ value }) => parseInt(value, 10))
   page?: number = 1;
+
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  @Transform(({ value }) => parseInt(value, 10))
+  unitKerjaId?: number;
 }

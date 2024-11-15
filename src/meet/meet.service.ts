@@ -577,7 +577,7 @@ export class MeetService {
         id: meeting.id,
       },
       data: {
-        status: param.status,
+        status: param.status === "Belum_Dimulai" ? "Belum Dimulai" : param.status,
       },
     });
   }

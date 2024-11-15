@@ -13,7 +13,7 @@ export class SubUnitKerjaService {
     private prismaService: PrismaService,
     private errorService: ErrorService,
     private unitKerjaService: UnitKerjaService,
-  ) {}
+  ) { }
   async createSubUnitKerja(payload: CreateSubUnitKerjaDto) {
     await this.unitKerjaService.findOneUnitKerja(payload.unitKerjaId);
     await this.checkKodeMustUnique(payload.kode);
@@ -29,6 +29,7 @@ export class SubUnitKerjaService {
   async findAllSubUnitKerja(query: GetSubUnitKerjaQueryDto) {
     const subUnitKerja = await this.prismaService.sub_Unit_Kerja.findMany({
       where: {
+        unitKerjaId: query.unitKerjaId || undefined,
         nama: {
           contains: query.name || undefined,
         },
@@ -42,6 +43,7 @@ export class SubUnitKerjaService {
 
     const total = await this.prismaService.sub_Unit_Kerja.count({
       where: {
+        unitKerjaId: query.unitKerjaId || undefined,
         nama: {
           contains: query.name || undefined,
         },
