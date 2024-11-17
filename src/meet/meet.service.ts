@@ -139,7 +139,17 @@ export class MeetService {
         totalPage: query.size ? Math.ceil(total / query.size) : 1,
         totalItem: total,
       },
+      count: await this.countMeeting(auth),
     };
+  }
+
+  async countMeeting(auth: IAuth) {
+    return {
+      onlineToday: await this.meetHelper.countRapatOnlineToday(auth),
+      offlineToday: await this.meetHelper.countRapatOfflineToday(auth),
+      thisMonth: await this.meetHelper.countRapatThisMonth(auth),
+      finished: await this.meetHelper.countRapatFinished(auth),
+    }
   }
 
   async findAllMeetingByUser(request, query: GetMeetingByUserQueryDto) {

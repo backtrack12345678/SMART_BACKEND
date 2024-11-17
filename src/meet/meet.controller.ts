@@ -47,7 +47,7 @@ const allowedMimeTypes = {
 
 @Controller('/api/meeting')
 export class MeetController {
-  constructor(private readonly meetService: MeetService) {}
+  constructor(private readonly meetService: MeetService) { }
 
   @Auth()
   @Roles(Role.ADMIN, Role.OPERATOR)
@@ -91,6 +91,7 @@ export class MeetController {
     return {
       status: 'success',
       paging: result.paging,
+      count: result.count,
       data: result.data,
     };
   }

@@ -2,13 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { ErrorService } from '../../common/error/error.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { getHost } from '../../common/utlis/utils';
+import { IAuth } from 'src/common/model/web.model';
 
 @Injectable()
 export class MeetHelper {
   constructor(
     private errorService: ErrorService,
     private prismaService: PrismaService,
-  ) {}
+  ) { }
 
   async checkConflictMeeting(
     ruanganId: number,
@@ -209,6 +210,60 @@ export class MeetHelper {
     },
   };
 
+  roleCondition(auth: IAuth) {
+    return auth.role === "operator" ? auth.unitKerjaId : undefined;
+  }
+
+  todayDateCondition() {
+    return {
+      gte: new Date(new Date().setHours(0, 0, 0, 0)),
+      lt: new Date(new Date().setHours(24, 0, 0, 0)),
+    }
+  }
+
+  async countRapatOnlineToday(auth: IAuth): Promise<number> {
+    return await this.prismaService.rapat_Online.count({
+      where: {
+        rapat: {
+          unitKerjaId: this.roleCondition(auth),
+          mulai: this.todayDateCondition(),
+        },
+      },
+    });
+  }
+
+  async countRapatOfflineToday(auth: IAuth): Promise<number> {
+    return await this.prismaService.rapat_Offline.count({
+      where: {
+        rapat: {
+          unitKerjaId: this.roleCondition(auth),
+          mulai: this.todayDateCondition(),
+        },
+      },
+    });
+  }
+
+  async countRapatThisMonth(auth: IAuth): Promise<number> {
+    return await this.prismaService.rapat.count({
+      where: {
+        unitKerjaId: this.roleCondition(auth),
+        createdAt: {
+          gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+          lt: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
+        },
+      }
+    });
+  }
+
+  async countRapatFinished(auth: IAuth): Promise<number> {
+    return await this.prismaService.rapat.count({
+      where: {
+        unitKerjaId: this.roleCondition(auth),
+        status: 'selesai',
+      },
+    });
+  }
+
   toParticipantsResponse(request, participant, absensi?) {
     return {
       id: participant.id,
@@ -216,7 +271,7 @@ export class MeetHelper {
       nip: participant.userData.nip,
       kehadiran:
         participant.anggotaRapat.length > 0 &&
-        participant.anggotaRapat.some((anggota) => anggota.kehadiran)
+          participant.anggotaRapat.some((anggota) => anggota.kehadiran)
           ? 'Hadir'
           : 'Tidak Hadir',
       jabatan: {
