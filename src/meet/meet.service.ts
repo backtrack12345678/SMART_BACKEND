@@ -93,7 +93,7 @@ export class MeetService {
           },
         },
       },
-      select: this.meetingSelectCondition,
+      select: this.meetingSelectCondition(),
     });
 
     return this.toMeetingResponse(request, meeting);
@@ -119,7 +119,7 @@ export class MeetService {
       orderBy: {
         createdAt: 'desc',
       },
-      select: this.meetingSelectCondition,
+      select: this.meetingSelectCondition(),
     });
 
     const total = await this.prismaService.rapat.count({
@@ -194,15 +194,21 @@ export class MeetService {
         },
       }),
       select: {
-        ...this.meetingSelectCondition,
+        ...this.meetingSelectCondition(request.user.id),
       },
     });
 
-    return meetings.map((meeting) => ({
+    console.log(meetings[3].anggota);
+
+    return meetings.map((meeting, i) => ({
       ...this.toMeetingResponse(request, meeting),
       kehadiran: meeting.anggota.some((anggota) => anggota.kehadiran)
         ? 'Hadir'
         : 'Tidak Hadir',
+      waktuKehadiran: {
+        dibuat: meeting.anggota[i]?.buktiAbsensi?.createdAt || null, // Menghapus nilai null atau undefined
+        diperbarui: meeting.anggota[i]?.buktiAbsensi?.updatedAt || null, // Menghapus nilai null atau undefined
+      },
     }));
   }
 
@@ -213,7 +219,7 @@ export class MeetService {
         id: meetingId,
       },
       select: {
-        ...this.meetingSelectCondition,
+        ...this.meetingSelectCondition(),
         laporan: {
           select: {
             id: true,
@@ -266,45 +272,60 @@ export class MeetService {
     };
   }
 
-  meetingSelectCondition = {
-    id: true,
-    nama: true,
-    deskripsi: true,
-    unitKerja: {
-      select: {
-        id: true,
-        nama: true,
+  meetingSelectCondition(userId?: string) {
+    return {
+      id: true,
+      nama: true,
+      deskripsi: true,
+      unitKerja: {
+        select: {
+          id: true,
+          nama: true,
+        },
       },
-    },
-    status: true,
-    tipe: true,
-    surat: true,
-    mulai: true,
-    selesai: true,
-    laporan: true,
-    createdAt: true,
-    buktiSurat: {
-      select: {
-        nama: true,
-        path: true,
+      status: true,
+      tipe: true,
+      surat: true,
+      mulai: true,
+      selesai: true,
+      laporan: true,
+      createdAt: true,
+      buktiSurat: {
+        select: {
+          nama: true,
+          path: true,
+        },
       },
-    },
-    rapatOffline: {
-      include: {
-        ruangan: true,
+      rapatOffline: {
+        include: {
+          ruangan: true,
+        },
       },
-    },
-    rapatOnline: {
-      select: {
-        link: true,
+      rapatOnline: {
+        select: {
+          link: true,
+        },
       },
-    },
-    anggota: {
-      select: {
-        kehadiran: true,
+      anggota: {
+        ...(userId && {
+          where: {
+            userId: userId,
+          },
+        }),
+        select: {
+          kehadiran: true,
+          ...(userId && {
+            buktiAbsensi: {
+              select: {
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          }),
+        },
       },
-    },
-  };
+    };
+  }
 
   toMeetingResponse(request, meeting, type?: string) {
     return {
@@ -413,7 +434,7 @@ export class MeetService {
           },
         }),
       },
-      select: this.meetingSelectCondition,
+      select: this.meetingSelectCondition(),
     });
 
     if (buktiSurat) {
