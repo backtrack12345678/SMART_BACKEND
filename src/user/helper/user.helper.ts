@@ -160,7 +160,7 @@ export class UserHelper {
     });
 
     if (count === 0) {
-      this.errorService.notFound('Pangkat Atau Golongan Tidak Ditemukan');
+      this.errorService.notFound('Jabatan Tidak Ditemukan');
     }
   }
 
