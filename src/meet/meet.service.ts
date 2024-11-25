@@ -198,16 +198,14 @@ export class MeetService {
       },
     });
 
-    console.log(meetings[3].anggota);
-
     return meetings.map((meeting, i) => ({
       ...this.toMeetingResponse(request, meeting),
       kehadiran: meeting.anggota.some((anggota) => anggota.kehadiran)
         ? 'Hadir'
         : 'Tidak Hadir',
       waktuKehadiran: {
-        dibuat: meeting.anggota[i]?.buktiAbsensi?.createdAt || null, // Menghapus nilai null atau undefined
-        diperbarui: meeting.anggota[i]?.buktiAbsensi?.updatedAt || null, // Menghapus nilai null atau undefined
+        dibuat: meeting.anggota[i]?.buktiAbsensi?.createdAt || null,
+        diperbarui: meeting.anggota[i]?.buktiAbsensi?.updatedAt || null,
       },
     }));
   }
