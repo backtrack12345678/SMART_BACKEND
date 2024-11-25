@@ -30,7 +30,7 @@ export class MeetService {
     private validationService: ValidationService,
     private fileService: FilesService,
     private notificationService: NotificationService,
-  ) { }
+  ) {}
 
   async createMeeting(
     request,
@@ -73,19 +73,19 @@ export class MeetService {
         ...dataRapat,
         ...(dataRapat.tipe === 'offline'
           ? {
-            rapatOffline: {
-              create: {
-                ruanganId: ruanganId,
+              rapatOffline: {
+                create: {
+                  ruanganId: ruanganId,
+                },
               },
-            },
-          }
+            }
           : {
-            rapatOnline: {
-              create: {
-                link: link,
+              rapatOnline: {
+                create: {
+                  link: link,
+                },
               },
-            },
-          }),
+            }),
         buktiSurat: {
           create: {
             nama: buktiSurat.filename,
@@ -117,7 +117,7 @@ export class MeetService {
         take: query.size,
       }),
       orderBy: {
-        createdAt: "desc",
+        createdAt: 'desc',
       },
       select: this.meetingSelectCondition,
     });
@@ -149,7 +149,7 @@ export class MeetService {
       offlineToday: await this.meetHelper.countRapatOfflineToday(auth),
       thisMonth: await this.meetHelper.countRapatThisMonth(auth),
       finished: await this.meetHelper.countRapatFinished(auth),
-    }
+    };
   }
 
   async findAllMeetingByUser(request, query: GetMeetingByUserQueryDto) {
@@ -391,19 +391,19 @@ export class MeetService {
         ...dataRapat,
         ...(dataRapat.tipe === 'offline'
           ? {
-            rapatOffline: {
-              update: {
-                ruanganId: ruanganId,
+              rapatOffline: {
+                update: {
+                  ruanganId: ruanganId,
+                },
               },
-            },
-          }
+            }
           : {
-            rapatOnline: {
-              update: {
-                link: link,
+              rapatOnline: {
+                update: {
+                  link: link,
+                },
               },
-            },
-          }),
+            }),
         ...(buktiSurat && {
           buktiSurat: {
             update: {
@@ -490,8 +490,8 @@ export class MeetService {
       participantsNotifToken.length === 0
         ? []
         : participantsNotifToken
-          .filter((item) => item.notificationToken !== null)
-          .map((item) => item.notificationToken);
+            .filter((item) => item.notificationToken !== null)
+            .map((item) => item.notificationToken);
 
     if (filteredToken.length !== 0) {
       await this.notificationService.meeting(filteredToken, meeting);
@@ -518,13 +518,15 @@ export class MeetService {
     const participants = await this.prismaService.anggota_Rapat.findMany({
       where: {
         rapatId: meetingId,
-        user: {
-          userData: {
-            nama: {
-              contains: query.name || undefined,
+        ...(query.name && {
+          user: {
+            userData: {
+              nama: {
+                contains: query.name,
+              },
             },
           },
-        },
+        }),
       },
       take: query.size,
       skip: skipConditions || undefined,
@@ -535,7 +537,7 @@ export class MeetService {
       }),
       select: {
         user: {
-          select: this.meetHelper.participantsSelectCondition,
+          select: this.meetHelper.participantsSelectCondition(meetingId),
         },
         ...(request.user.role !== 'user' && {
           buktiAbsensi: {
@@ -587,7 +589,8 @@ export class MeetService {
         id: meeting.id,
       },
       data: {
-        status: param.status === "Belum_Dimulai" ? "Belum Dimulai" : param.status,
+        status:
+          param.status === 'Belum_Dimulai' ? 'Belum Dimulai' : param.status,
       },
     });
   }

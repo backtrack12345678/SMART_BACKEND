@@ -9,7 +9,7 @@ export class MeetHelper {
   constructor(
     private errorService: ErrorService,
     private prismaService: PrismaService,
-  ) { }
+  ) {}
 
   async checkConflictMeeting(
     ruanganId: number,
@@ -80,7 +80,7 @@ export class MeetHelper {
         },
         role: 'user',
       },
-      select: this.participantsSelectCondition,
+      select: this.participantsSelectCondition(),
     });
 
     if (users.length === 0) {
@@ -188,37 +188,44 @@ export class MeetHelper {
     return participant.id;
   }
 
-  participantsSelectCondition = {
-    id: true,
-    userData: {
-      select: {
-        nama: true,
-        nip: true,
-        photo: true,
-        jabatan: {
-          select: {
-            id: true,
-            nama: true,
+  participantsSelectCondition(meetingId?: string) {
+    return {
+      id: true,
+      userData: {
+        select: {
+          nama: true,
+          nip: true,
+          photo: true,
+          jabatan: {
+            select: {
+              id: true,
+              nama: true,
+            },
           },
         },
       },
-    },
-    anggotaRapat: {
-      select: {
-        kehadiran: true,
+      anggotaRapat: {
+        ...(meetingId && {
+          where: {
+            rapatId: meetingId,
+          },
+        }),
+        select: {
+          kehadiran: true,
+        },
       },
-    },
-  };
+    };
+  }
 
   roleCondition(auth: IAuth) {
-    return auth.role === "operator" ? auth.unitKerjaId : undefined;
+    return auth.role === 'operator' ? auth.unitKerjaId : undefined;
   }
 
   todayDateCondition() {
     return {
       gte: new Date(new Date().setHours(0, 0, 0, 0)),
       lt: new Date(new Date().setHours(24, 0, 0, 0)),
-    }
+    };
   }
 
   async countRapatOnlineToday(auth: IAuth): Promise<number> {
@@ -251,7 +258,7 @@ export class MeetHelper {
           gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
           lt: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
         },
-      }
+      },
     });
   }
 
@@ -270,10 +277,11 @@ export class MeetHelper {
       nama: participant.userData.nama,
       nip: participant.userData.nip,
       kehadiran:
-        participant.anggotaRapat.length > 0 &&
-          participant.anggotaRapat.some((anggota) => anggota.kehadiran)
-          ? 'Hadir'
-          : 'Tidak Hadir',
+        participant.anggotaRapat.length > 0
+          ? participant.anggotaRapat.some((anggota) => anggota.kehadiran)
+            ? 'Hadir'
+            : 'Tidak Hadir'
+          : undefined,
       jabatan: {
         id: participant.userData.jabatan?.id,
         nama: participant.userData.jabatan?.nama,
