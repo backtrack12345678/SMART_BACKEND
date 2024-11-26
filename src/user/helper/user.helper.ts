@@ -338,9 +338,12 @@ export class UserHelper {
     },
   };
 
-  toUserResponse(request, user) {
+  toUserResponse(request, user, type?: string) {
     return {
       id: user.id,
+      ...(type === 'private' && {
+        role: user.role,
+      }),
       nama: user.userData.nama,
       nip: user.userData.nip,
       phone: user.userData.phone,

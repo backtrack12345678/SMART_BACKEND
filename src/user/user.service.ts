@@ -78,7 +78,7 @@ export class UserService {
     return this.userHelper.toUserResponse(request, createUser);
   }
 
-  async findOneUser(request, userId: string) {
+  async findOneUser(request, userId: string, type?: string) {
     const auth: IAuth = request.user;
     const user = await this.prismaService.user.findUnique({
       where: {
@@ -105,7 +105,7 @@ export class UserService {
     //   }
     // }
 
-    return this.userHelper.toUserResponse(request, user);
+    return this.userHelper.toUserResponse(request, user, type);
   }
 
   async getAllUsers(request, query: GetAllUsersQueryDto) {
