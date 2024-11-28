@@ -198,6 +198,8 @@ export class MeetService {
       },
     });
 
+    return meetings;
+
     return meetings.map((meeting, i) => ({
       ...this.toMeetingResponse(request, meeting),
       kehadiran: meeting.anggota.some((anggota) => anggota.kehadiran)
@@ -314,11 +316,6 @@ export class MeetService {
           kehadiran: true,
           ...(userId && {
             buktiAbsensi: {
-              where: {
-                anggotaRapat: {
-                  userId: userId,
-                },
-              },
               select: {
                 createdAt: true,
                 updatedAt: true,
