@@ -314,6 +314,11 @@ export class MeetService {
           kehadiran: true,
           ...(userId && {
             buktiAbsensi: {
+              where: {
+                anggotaRapat: {
+                  userId: userId,
+                },
+              },
               select: {
                 createdAt: true,
                 updatedAt: true,
