@@ -24,7 +24,7 @@ export class UserService {
     private userHelper: UserHelper,
     private fileService: FilesService,
     private configService: ConfigService,
-  ) { }
+  ) {}
 
   async createUser(
     request,
@@ -78,7 +78,7 @@ export class UserService {
     return this.userHelper.toUserResponse(request, createUser);
   }
 
-  async findOneUser(request, userId: string) {
+  async findOneUser(request, userId: string, type?: string) {
     const auth: IAuth = request.user;
     const user = await this.prismaService.user.findUnique({
       where: {
@@ -105,15 +105,15 @@ export class UserService {
     //   }
     // }
 
-    return this.userHelper.toUserResponse(request, user);
+    return this.userHelper.toUserResponse(request, user, type);
   }
 
   async getAllUsers(request, query: GetAllUsersQueryDto) {
-    const user: IAuth = request.user;
+    const auth: IAuth = request.user;
     const users = await this.prismaService.user.findMany({
       where: {
         userData: {
-          unitKerjaId: user.role === 'operator' ? user.unitKerjaId : undefined,
+          unitKerjaId: auth.role === 'operator' ? auth.unitKerjaId : undefined,
           nama: {
             contains: query.name || undefined,
           },
@@ -141,7 +141,7 @@ export class UserService {
 
     const users = await this.prismaService.user.findMany({
       where: {
-        role: "user",
+        role: 'user',
         userData: {
           nama: {
             contains: query.name || undefined,
@@ -157,7 +157,7 @@ export class UserService {
 
     const total = await this.prismaService.user.count({
       where: {
-        role: "user",
+        role: 'user',
         userData: {
           nama: {
             contains: query.name || undefined,
@@ -329,7 +329,7 @@ export class UserService {
     });
   }
 
-  async deleteUser() { }
+  async deleteUser() {}
 
   async login(payload: LoginDto) {
     const user = await this.prismaService.user.findUnique({

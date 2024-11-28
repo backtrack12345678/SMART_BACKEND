@@ -91,12 +91,12 @@ export class UserController {
   }
 
   @Auth()
-  @Roles(Role.ADMIN,Role.OPERATOR)
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @Get('/list-participants')
   async getAllParticipants(
     @Query() query: GetAllParticipantsQueryDto,
     @Req() request: Request,
-  ){
+  ) {
     const result = await this.userService.getAllParticipants(request, query);
     return {
       status: 'success',
@@ -108,7 +108,11 @@ export class UserController {
   @Auth()
   @Get('/profile')
   async getProfile(@Req() request) {
-    const result = await this.userService.findOneUser(request, request.user.id);
+    const result = await this.userService.findOneUser(
+      request,
+      request.user.id,
+      'private',
+    );
     return {
       status: 'success',
       data: result,

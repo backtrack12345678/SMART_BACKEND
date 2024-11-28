@@ -33,7 +33,7 @@ model User_Data {
   unitKerja         Unit_Kerja?       @relation(fields: [unitKerjaId], references: [id])
   subUnitKerjaId    Int?              @map("sub_unit_kerja_id")
   subUnitKerja      Sub_Unit_Kerja?   @relation(fields: [subUnitKerjaId], references: [id])
-  pangkatGolonganId Int?              @map("pangakt_golongan_id")
+  pangkatGolonganId Int?              @map("pangkat_golongan_id")
   pangkatGolongan   Pangkat_Golongan? @relation(fields: [pangkatGolonganId], references: [id])
   jabatanId         Int?              @map("jabatan_id")
   jabatan           Jabatan?          @relation(fields: [jabatanId], references: [id])
