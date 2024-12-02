@@ -98,7 +98,7 @@ model Jabatan {
   id          Int         @id @default(autoincrement())
   kode        String      @unique @db.VarChar(10)
   nama        String      @db.VarChar(150)
-  klasifikasi String      @db.VarChar(10)
+  klasifikasi String      @db.VarChar(100)
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime?   @updatedAt @map("updated_at")
   userData    User_Data[]

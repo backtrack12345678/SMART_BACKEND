@@ -13,6 +13,6 @@ export class CreateJabatanDto {
 
   @IsNotEmpty()
   @IsString()
-  @MaxLength(10)
+  @MaxLength(100)
   klasifikasi: string;
 }
